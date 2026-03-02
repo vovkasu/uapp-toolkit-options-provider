@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Globalization;
 using UnityEngine;
 
-namespace UAppToolkit.OptionsProvider
+namespace UAppToolKit.Options
 {
     public abstract class OptionsProviderBase : INotifyPropertyChanged
     {

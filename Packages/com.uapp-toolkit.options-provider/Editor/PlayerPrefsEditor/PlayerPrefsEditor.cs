@@ -8,7 +8,7 @@ using Microsoft.Win32;
 using UnityEngine;
 using UnityEditor;
 
-namespace UAppToolkit.OptionsProvider.Editor.PlayerPrefsTool
+namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 {
     public class PlayerPrefsEditor : EditorWindow
     {
