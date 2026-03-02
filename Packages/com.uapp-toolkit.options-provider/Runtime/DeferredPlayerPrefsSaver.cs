@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAppToolKit.Core.Options
+namespace UAppToolkit.OptionsProvider
 {
     public class DeferredPlayerPrefsSaver : MonoBehaviour
     {
