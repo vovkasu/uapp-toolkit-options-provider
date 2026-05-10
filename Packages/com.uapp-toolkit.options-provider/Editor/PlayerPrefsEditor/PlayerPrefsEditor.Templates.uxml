@@ -36,6 +36,7 @@
     <!-- ── Actions column cell ───────────────────────────────────────────── -->
     <ui:VisualElement name="tpl-cell-actions" class="ppe-cell ppe-cell--actions">
         <ui:Button name="ignore-btn" class="ppe-icon-btn ppe-ignore-btn" />
+        <ui:Button name="restore-btn" class="ppe-icon-btn ppe-restore-btn ppe-hidden" />
         <ui:Button name="del-btn" class="ppe-delete-btn" />
     </ui:VisualElement>
 

@@ -28,13 +28,16 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string NameFilterKey     = "filter-key";
         private const string NameFilterType    = "filter-type";
         private const string NameFilterValue   = "filter-value";
+        private const string NameSelectedCountLabel = "selected-count-label";
         private const string NameListContainer = "list-container";
         private const string NameList          = "ppe-list";
         private const string NameTabKeys       = "tab-keys";
         private const string NameTabIgnored    = "tab-ignored";
         private const string NameSelectToggle  = "select-toggle";
+        private const string NameSelectAllToggle = "select-all-toggle";
         private const string NameFavBtn        = "fav-btn";
         private const string NameIgnoreBtn     = "ignore-btn";
+        private const string NameRestoreBtn    = "restore-btn";
         private const string NameKeyField      = "key-field";
         private const string NameTypeField     = "type-field";
         private const string NameValueField    = "value-field";
@@ -45,6 +48,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         // ─── Toolbar button names ─────────────────────────────────────────────
 
         private const string NameBtnAddNew    = "btn-add-new";
+        private const string NameBtnRestoreSelected = "btn-restore-selected";
+        private const string NameBtnIgnoreSelected = "btn-ignore-selected";
         private const string NameBtnDeleteSelected = "btn-delete-selected";
         private const string NameBtnDeleteAll = "btn-delete-all";
         private const string NameBtnSave      = "btn-save";
@@ -99,8 +104,14 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private const string BtnTextRestore = "↩";
         private const string BtnTextDelete  = "✕";
+        private const string BtnTextDeleteSelected = "✕ Delete Selected";
+        private const string BtnTextRestoreSelected = "↩ Restore Selected";
+        private const string BtnTextIgnoreSelected = "⊘ Ignore Selected";
+        private const string BtnTextUnignoreSelected = "↩ Unignore Selected";
+        private const string SelectedCountFmt = "Selected: {0}";
         private const string TooltipRestore = "Restore";
         private const string TooltipDelete  = "Delete";
+        private const string TooltipRestoreValue = "Revert value";
         private const string BtnTextFavorite = "★";
         private const string BtnTextNotFavorite = "☆";
         private const string TooltipFavorite = "Remove from favorites";
@@ -169,6 +180,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const float  RowHeightMin         = 18f;
         private const float  RowHeightMax         = 120f;
         private const float  RowHeightDefault     = 24f;
+        private const long   FilterDebounceMs     = 80;
 
         // ─── State ────────────────────────────────────────────────────────────
 
@@ -185,8 +197,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         // ─── Per-column filter state ──────────────────────────────────────────
 
         private string _keyFilter   = "";
+        private string _keyFilterSearch = "";
         private string _typeFilter  = "";
         private string _valueFilter = "";
+        private string _valueFilterSearch = "";
+        private int    _filterRequestVersion;
 
         private bool IsFilterActive =>
             !string.IsNullOrEmpty(_keyFilter)   ||
@@ -198,9 +213,13 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private MultiColumnListView _listView;
         private Label               _statusLabel;
         private Label               _errorBanner;
+        private Label               _selectedCountLabel;
         private ToolbarButton       _deleteSelectedButton;
+        private ToolbarButton       _restoreSelectedButton;
+        private ToolbarButton       _ignoreSelectedButton;
         private ToolbarToggle       _tabKeys;
         private ToolbarToggle       _tabIgnored;
+        private Toggle              _selectAllToggle;
         private VisualTreeAsset     _cellTemplatesAsset;
         private bool                _headerSyncRegistered;
         private VisualElement       _filterColKeyCell;
@@ -267,16 +286,21 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         {
             _statusLabel = rootVisualElement.Q<Label>(NameStatusLabel);
             _errorBanner = rootVisualElement.Q<Label>(NameErrorBanner);
+            _selectedCountLabel = rootVisualElement.Q<Label>(NameSelectedCountLabel);
             // error banner starts hidden via ppe-hidden class in UXML
 
             _filterColKeyCell  = rootVisualElement.Q<VisualElement>(null, ClassFilterColKey);
             _filterColTypeCell = rootVisualElement.Q<VisualElement>(null, ClassFilterColType);
 
             _deleteSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnDeleteSelected);
+            _restoreSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnRestoreSelected);
+            _ignoreSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnIgnoreSelected);
             _tabKeys              = rootVisualElement.Q<ToolbarToggle>(NameTabKeys);
             _tabIgnored           = rootVisualElement.Q<ToolbarToggle>(NameTabIgnored);
 
             rootVisualElement.Q<ToolbarButton>(NameBtnAddNew).clicked    += AddNewPref;
+            _restoreSelectedButton.clicked += RestoreSelectedItems;
+            _ignoreSelectedButton.clicked  += ToggleIgnoredSelectedItems;
             _deleteSelectedButton.clicked += DeleteSelectedItems;
             rootVisualElement.Q<ToolbarButton>(NameBtnDeleteAll).clicked += MarkAllForDelete;
             rootVisualElement.Q<ToolbarButton>(NameBtnSave).clicked      += SaveAll;
@@ -302,7 +326,12 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
             rootVisualElement.Q<TextField>(NameFilterKey)
                 .RegisterValueChangedCallback(
-                    evt => { _keyFilter   = evt.newValue; ApplyFilter(); });
+                    evt =>
+                    {
+                        _keyFilter       = evt.newValue ?? "";
+                        _keyFilterSearch = _keyFilter.ToLowerInvariant();
+                        RequestApplyFilter();
+                    });
 
             var typeFilter = rootVisualElement.Q<DropdownField>(NameFilterType);
             typeFilter.choices = new List<string> { TypeFilterAll };
@@ -310,16 +339,23 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             typeFilter.SetValueWithoutNotify(TypeFilterAll);
             typeFilter.RegisterValueChangedCallback(evt =>
             {
-                _typeFilter = evt.newValue == TypeFilterAll ? "" : evt.newValue;
+                _typeFilter = evt.newValue == TypeFilterAll
+                    ? ""
+                    : PrefValue.DisplayToTypeId(evt.newValue);
                 ApplyFilter();
             });
 
             rootVisualElement.Q<TextField>(NameFilterValue)
                 .RegisterValueChangedCallback(
-                    evt => { _valueFilter = evt.newValue; ApplyFilter(); });
+                    evt =>
+                    {
+                        _valueFilter       = evt.newValue ?? "";
+                        _valueFilterSearch = _valueFilter.ToLowerInvariant();
+                        RequestApplyFilter();
+                    });
 
             UpdateTabLabels();
-            UpdateDeleteSelectedButton();
+            UpdateSelectedControls();
         }
 
         // =====================================================================
@@ -338,6 +374,17 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             var tpl = container.Q<VisualElement>(templateName);
             tpl.RemoveFromHierarchy();
             return tpl;
+        }
+
+        private static void DisableFocusRecursive(VisualElement element)
+        {
+            if (element == null) return;
+
+            element.focusable = false;
+            element.tabIndex = -1;
+
+            foreach (var child in element.Children())
+                DisableFocusRecursive(child);
         }
 
         // =====================================================================
@@ -420,11 +467,22 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         {
             if (_statusLabel == null) return;
 
-            int total   = _prefs.Count(p => IsInCurrentTab(p));
+            int total   = 0;
             int shown   = _displayedPrefs.Count;
-            int newCnt  = _prefs.Count(p => IsInCurrentTab(p) && p.isNew);
-            int delCnt  = _prefs.Count(p => IsInCurrentTab(p) && p.isMarkedForDelete);
-            int editCnt = _prefs.Count(p => IsInCurrentTab(p) && p.Changed);
+            int newCnt  = 0;
+            int delCnt  = 0;
+            int editCnt = 0;
+
+            for (int i = 0; i < _prefs.Count; i++)
+            {
+                var pref = _prefs[i];
+                if (!IsInCurrentTab(pref)) continue;
+
+                total++;
+                if (pref.isNew) newCnt++;
+                if (pref.isMarkedForDelete) delCnt++;
+                if (pref.Changed) editCnt++;
+            }
 
             string project   = string.Format(StatusProjectFmt,
                 PlayerSettings.companyName, PlayerSettings.productName);
@@ -439,7 +497,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
             _statusLabel.text = project + StatusSeparator + countPart + extra;
             UpdateTabLabels();
-            UpdateDeleteSelectedButton();
+            UpdateSelectedControls();
         }
 
         private bool IsInCurrentTab(PlayerPrefStore pref) =>
@@ -476,9 +534,34 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                     TabTextIgnoredFmt, _prefs.Count(IsIgnored));
         }
 
-        private void UpdateDeleteSelectedButton()
+        private void UpdateSelectedControls()
         {
-            _deleteSelectedButton?.SetEnabled(_selectedPrefs.Count > 0);
+            int selectedCount = _selectedPrefs.Count;
+            bool hasSelected = selectedCount > 0;
+
+            if (_selectedCountLabel != null)
+                _selectedCountLabel.text = string.Format(SelectedCountFmt, selectedCount);
+
+            if (_restoreSelectedButton != null)
+            {
+                _restoreSelectedButton.text = BtnTextRestoreSelected;
+                _restoreSelectedButton.SetEnabled(_selectedPrefs.Any(CanRestoreValue));
+            }
+
+            if (_ignoreSelectedButton != null)
+            {
+                _ignoreSelectedButton.text = _showIgnoredTab
+                    ? BtnTextUnignoreSelected
+                    : BtnTextIgnoreSelected;
+                _ignoreSelectedButton.SetEnabled(hasSelected);
+            }
+
+            if (_deleteSelectedButton != null)
+            {
+                _deleteSelectedButton.text = BtnTextDeleteSelected;
+                _deleteSelectedButton.SetEnabled(hasSelected);
+            }
+            UpdateSelectAllToggle();
         }
 
         // =====================================================================
@@ -519,15 +602,28 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void ApplyFilter()
         {
+            _filterRequestVersion++;
             _displayedPrefs.Clear();
-            _selectedPrefs.RemoveWhere(p => !_prefs.Contains(p) || !IsInCurrentTab(p));
+            _selectedPrefs.RemoveWhere(p => p == null || !IsInCurrentTab(p));
 
             if (!IsFilterActive)
-                _displayedPrefs.AddRange(_prefs.Where(IsInCurrentTab));
+            {
+                for (int i = 0; i < _prefs.Count; i++)
+                {
+                    var pref = _prefs[i];
+                    if (IsInCurrentTab(pref))
+                        _displayedPrefs.Add(pref);
+                }
+            }
             else
-                foreach (var p in _prefs)
-                    if (IsInCurrentTab(p) && MatchesAllFilters(p))
-                        _displayedPrefs.Add(p);
+            {
+                for (int i = 0; i < _prefs.Count; i++)
+                {
+                    var pref = _prefs[i];
+                    if (IsInCurrentTab(pref) && MatchesAllFilters(pref))
+                        _displayedPrefs.Add(pref);
+                }
+            }
 
             if (_listView != null)
             {
@@ -538,19 +634,31 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             UpdateStatus();
         }
 
+        private void RequestApplyFilter()
+        {
+            int version = ++_filterRequestVersion;
+            rootVisualElement.schedule
+                .Execute(() =>
+                {
+                    if (version == _filterRequestVersion)
+                        ApplyFilter();
+                })
+                .StartingIn(FilterDebounceMs);
+        }
+
         private bool MatchesAllFilters(PlayerPrefStore pref)
         {
-            if (!string.IsNullOrEmpty(_keyFilter) &&
-                pref.name.IndexOf(_keyFilter, StringComparison.OrdinalIgnoreCase) < 0)
+            if (!string.IsNullOrEmpty(_keyFilterSearch) &&
+                pref.SearchName.IndexOf(_keyFilterSearch, StringComparison.Ordinal) < 0)
                 return false;
 
             if (!string.IsNullOrEmpty(_typeFilter) &&
-                !string.Equals(pref.value.TypeDisplayName, _typeFilter,
+                !string.Equals(pref.value.TypeId, _typeFilter,
                     StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            if (!string.IsNullOrEmpty(_valueFilter) &&
-                pref.StringValue.IndexOf(_valueFilter, StringComparison.OrdinalIgnoreCase) < 0)
+            if (!string.IsNullOrEmpty(_valueFilterSearch) &&
+                pref.SearchValue.IndexOf(_valueFilterSearch, StringComparison.Ordinal) < 0)
                 return false;
 
             return true;
@@ -571,10 +679,13 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 width = 28, minWidth = 28, maxWidth = 28,
                 sortable = false, resizable = false,
             };
+            selectCol.makeHeader = MakeSelectHeader;
+            selectCol.bindHeader = _ => UpdateSelectAllToggle();
             selectCol.makeCell = () =>
             {
                 var cell = CloneCellTemplate(TplCellSelect);
                 var toggle = cell.Q<Toggle>(NameSelectToggle);
+                DisableFocusRecursive(cell);
                 toggle.RegisterValueChangedCallback(evt =>
                 {
                     if (toggle.userData is not PlayerPrefStore pref) return;
@@ -582,7 +693,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                         _selectedPrefs.Add(pref);
                     else
                         _selectedPrefs.Remove(pref);
-                    UpdateDeleteSelectedButton();
+                    UpdateSelectedControls();
                 });
                 return cell;
             };
@@ -592,7 +703,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var toggle = element.Q<Toggle>(NameSelectToggle);
                 toggle.userData = pref;
                 toggle.SetValueWithoutNotify(_selectedPrefs.Contains(pref));
-                toggle.SetEnabled(!pref.isMarkedForDelete);
+                toggle.SetEnabled(true);
                 ApplyRowStyle(element, pref, index);
             };
             selectCol.unbindCell = (element, _) =>
@@ -605,14 +716,15 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             // ── Favorite ─────────────────────────────────────────────────────
             var favoriteCol = new Column
             {
-                name = ColFavorite, title = "",
+                name = ColFavorite, title = BtnTextFavorite,
                 width = 28, minWidth = 28, maxWidth = 28,
-                sortable = false, resizable = false,
+                sortable = true, resizable = false,
             };
             favoriteCol.makeCell = () =>
             {
                 var cell = CloneCellTemplate(TplCellFavorite);
                 var btn = cell.Q<Button>(NameFavBtn);
+                DisableFocusRecursive(cell);
                 btn.clicked += () =>
                 {
                     if (btn.userData is not PlayerPrefStore pref) return;
@@ -776,18 +888,25 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             var actCol = new Column
             {
                 name = ColActions, title = "",
-                width = 56, minWidth = 56, maxWidth = 56,
+                width = 80, minWidth = 80, maxWidth = 80,
                 sortable = false, resizable = false,
             };
             actCol.makeCell = () =>
             {
                 var cell = CloneCellTemplate(TplCellActions);
                 var ignoreBtn = cell.Q<Button>(NameIgnoreBtn);
+                var restoreBtn = cell.Q<Button>(NameRestoreBtn);
                 var delBtn    = cell.Q<Button>(NameDelBtn);
+                DisableFocusRecursive(cell);
                 ignoreBtn.clicked += () =>
                 {
                     if (ignoreBtn.userData is not PlayerPrefStore pref) return;
                     ToggleIgnored(pref);
+                };
+                restoreBtn.clicked += () =>
+                {
+                    if (restoreBtn.userData is not PlayerPrefStore pref) return;
+                    RestoreValue(pref);
                 };
                 delBtn.clicked += () =>
                 {
@@ -800,13 +919,21 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             {
                 var pref = _displayedPrefs[index];
                 var ignoreBtn = element.Q<Button>(NameIgnoreBtn);
+                var restoreBtn = element.Q<Button>(NameRestoreBtn);
                 var delBtn    = element.Q<Button>(NameDelBtn);
                 bool isIgnored = IsIgnored(pref);
+                bool canRestoreValue = CanRestoreValue(pref);
 
                 ignoreBtn.userData = pref;
                 ignoreBtn.text = isIgnored ? BtnTextUnignore : BtnTextIgnore;
                 ignoreBtn.tooltip = isIgnored ? TooltipUnignore : TooltipIgnore;
                 ignoreBtn.SetEnabled(!pref.isMarkedForDelete);
+
+                restoreBtn.userData = pref;
+                restoreBtn.text = BtnTextRestore;
+                restoreBtn.tooltip = TooltipRestoreValue;
+                restoreBtn.EnableInClassList(ClassHidden, !canRestoreValue);
+                restoreBtn.SetEnabled(canRestoreValue);
 
                 delBtn.userData = pref;
                 delBtn.text    = pref.isMarkedForDelete ? BtnTextRestore : BtnTextDelete;
@@ -816,8 +943,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             actCol.unbindCell = (element, _) =>
             {
                 var ignoreBtn = element.Q<Button>(NameIgnoreBtn);
+                var restoreBtn = element.Q<Button>(NameRestoreBtn);
                 var delBtn    = element.Q<Button>(NameDelBtn);
                 if (ignoreBtn != null) ignoreBtn.userData = null;
+                if (restoreBtn != null) restoreBtn.userData = null;
                 if (delBtn    != null) delBtn.userData    = null;
             };
             columns.Add(actCol);
@@ -839,6 +968,70 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             (rootVisualElement.Q(NameListContainer) ?? rootVisualElement).Add(_listView);
 
             SetupFilterSync();
+        }
+
+        private VisualElement MakeSelectHeader()
+        {
+            var header = new VisualElement();
+            header.AddToClassList("ppe-select-header");
+
+            var toggle = new Toggle { name = NameSelectAllToggle };
+            toggle.AddToClassList("ppe-select-toggle");
+            toggle.AddToClassList("ppe-select-all-toggle");
+            toggle.RegisterValueChangedCallback(evt =>
+            {
+                if (toggle.userData is not bool ready || !ready) return;
+                SetVisibleSelection(evt.newValue);
+            });
+
+            header.Add(toggle);
+            DisableFocusRecursive(header);
+            _selectAllToggle = toggle;
+            return header;
+        }
+
+        private void SetVisibleSelection(bool selected)
+        {
+            var selectable = _displayedPrefs
+                .Where(IsSelectableForBulkSelection)
+                .ToList();
+
+            if (selectable.Count == 0) return;
+
+            if (selected)
+            {
+                foreach (var pref in selectable)
+                    _selectedPrefs.Add(pref);
+            }
+            else
+            {
+                foreach (var pref in selectable)
+                    _selectedPrefs.Remove(pref);
+            }
+
+            UpdateSelectedControls();
+            _listView.RefreshItems();
+        }
+
+        private bool IsSelectableForBulkSelection(PlayerPrefStore pref) =>
+            pref != null;
+
+        private static bool CanRestoreValue(PlayerPrefStore pref) =>
+            pref != null && !pref.isNew && !pref.isMarkedForDelete && pref.Changed;
+
+        private void UpdateSelectAllToggle()
+        {
+            if (_selectAllToggle == null) return;
+
+            int selectableCount = _displayedPrefs.Count(IsSelectableForBulkSelection);
+            bool allSelected = selectableCount > 0 && _displayedPrefs
+                .Where(IsSelectableForBulkSelection)
+                .All(p => _selectedPrefs.Contains(p));
+
+            _selectAllToggle.userData = false;
+            _selectAllToggle.SetValueWithoutNotify(allSelected);
+            _selectAllToggle.SetEnabled(selectableCount > 0);
+            _selectAllToggle.userData = true;
         }
 
         // =====================================================================
@@ -956,31 +1149,19 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             var descs = _listView.sortedColumns?.ToList()
                         ?? new List<SortColumnDescription>();
 
-            int CompareFavorites(PlayerPrefStore a, PlayerPrefStore b)
-            {
-                int cmp = IsFavorite(b).CompareTo(IsFavorite(a));
-                return cmp != 0 ? cmp : 0;
-            }
-
             if (descs.Count == 0)
             {
                 _prefs.Sort((a, b) =>
-                {
-                    int favCmp = CompareFavorites(a, b);
-                    if (favCmp != 0) return favCmp;
-                    return string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase);
-                });
+                    string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
             }
             else
             {
                 var primary = descs[0];
                 int Compare(PlayerPrefStore a, PlayerPrefStore b)
                 {
-                    int favCmp = CompareFavorites(a, b);
-                    if (favCmp != 0) return favCmp;
-
                     int cmp = primary.columnName switch
                     {
+                        ColFavorite => IsFavorite(b).CompareTo(IsFavorite(a)),
                         ColKey   => string.Compare(a.name, b.name,
                                         StringComparison.OrdinalIgnoreCase),
                         ColType  => string.Compare(a.value.TypeDisplayName,
@@ -991,6 +1172,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                         _        => string.Compare(a.name, b.name,
                                         StringComparison.OrdinalIgnoreCase),
                     };
+                    if (primary.columnName == ColFavorite)
+                        return cmp;
                     return primary.direction == SortDirection.Descending ? -cmp : cmp;
                 }
                 _prefs.Sort(Compare);
@@ -1050,6 +1233,59 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 _ignoredKeys.Add(pref.name);
 
             _selectedPrefs.Remove(pref);
+            SavePersistentKeySets();
+            ValidateDuplicates();
+            SortPrefs();
+            ApplyFilter();
+        }
+
+        private void RestoreValue(PlayerPrefStore pref)
+        {
+            if (!CanRestoreValue(pref))
+                return;
+
+            pref.Reset();
+            SortPrefs();
+            ApplyFilter();
+            UpdateStatus();
+        }
+
+        private void RestoreSelectedItems()
+        {
+            var toRestore = _selectedPrefs
+                .Where(CanRestoreValue)
+                .ToList();
+
+            if (toRestore.Count == 0) return;
+
+            foreach (var pref in toRestore)
+                pref.Reset();
+
+            SortPrefs();
+            ApplyFilter();
+        }
+
+        private void ToggleIgnoredSelectedItems()
+        {
+            var selected = _selectedPrefs
+                .Where(p => p != null)
+                .ToList();
+
+            if (selected.Count == 0) return;
+
+            if (_showIgnoredTab)
+            {
+                foreach (var pref in selected)
+                    _ignoredKeys.Remove(pref.name);
+            }
+            else
+            {
+                foreach (var pref in selected)
+                    if (!string.IsNullOrEmpty(pref.name))
+                        _ignoredKeys.Add(pref.name);
+            }
+
+            _selectedPrefs.Clear();
             SavePersistentKeySets();
             ValidateDuplicates();
             SortPrefs();
@@ -1316,7 +1552,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             if (_selectedPrefs.Count == 0) return;
             _selectedPrefs.Clear();
             _listView?.RefreshItems();
-            UpdateDeleteSelectedButton();
+            UpdateSelectedControls();
         }
 
         private void DeleteSelectedItems()

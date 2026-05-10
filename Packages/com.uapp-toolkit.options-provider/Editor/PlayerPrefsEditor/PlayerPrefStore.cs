@@ -23,10 +23,43 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         /// <summary>Value at the time of the last Save – baseline for change detection.</summary>
         public PrefValue initial;
 
+        private string _cachedSearchNameSource;
+        private string _cachedSearchName;
+        private string _cachedSearchValueSource;
+        private string _cachedSearchValue;
+
         // ── Derived ──────────────────────────────────────────────────────────
 
         public string StringValue => value.StringValue;
         public string StringType  => value.TypeId;
+
+        public string SearchName
+        {
+            get
+            {
+                string current = name ?? "";
+                if (_cachedSearchNameSource != current)
+                {
+                    _cachedSearchNameSource = current;
+                    _cachedSearchName       = current.ToLowerInvariant();
+                }
+                return _cachedSearchName;
+            }
+        }
+
+        public string SearchValue
+        {
+            get
+            {
+                string current = StringValue ?? "";
+                if (_cachedSearchValueSource != current)
+                {
+                    _cachedSearchValueSource = current;
+                    _cachedSearchValue       = current.ToLowerInvariant();
+                }
+                return _cachedSearchValue;
+            }
+        }
 
         /// <summary>
         /// True when the current value differs from the last-saved baseline.
