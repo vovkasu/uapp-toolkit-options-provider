@@ -1,0 +1,21 @@
+﻿using System.Collections.Generic;
+
+namespace UAppToolKit.Options.Editor.PlayerPrefsTool
+{
+    /// <summary>
+    /// Converts a collection of <see cref="PlayerPrefStore"/> entries to and from
+    /// a serialized string representation.
+    /// </summary>
+    public interface IPlayerPrefsSerializer
+    {
+        /// <summary>Serializes <paramref name="prefs"/> to a string.</summary>
+        string Serialize(List<PlayerPrefStore> prefs);
+
+        /// <summary>
+        /// Deserializes a string previously produced by <see cref="Serialize"/>.
+        /// Returns an empty list when the data contains no valid entries.
+        /// </summary>
+        List<PlayerPrefStore> Deserialize(string data);
+    }
+}
+

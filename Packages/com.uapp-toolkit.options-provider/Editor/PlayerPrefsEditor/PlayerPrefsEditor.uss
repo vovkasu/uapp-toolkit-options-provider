@@ -1,0 +1,267 @@
+﻿/* ============================================================
+   PlayerPrefsEditor.uss  –  UIToolkit styles
+   ============================================================ */
+
+/* ─── Utility ─────────────────────────────────────────────── */
+/* Toggle via EnableInClassList instead of style.display in C# */
+.ppe-hidden { display: none; }
+
+/* ─── Root ────────────────────────────────────────────────── */
+.ppe-root {
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+/* ─── Toolbar ─────────────────────────────────────────────── */
+.ppe-toolbar-btn {
+    font-size: 12px;
+    padding: 0 8px;
+}
+
+.ppe-toolbar-spacer {
+    flex-grow: 1;
+}
+
+/* ─── Per-column Filter Row ───────────────────────────────── */
+/*
+   Initial widths mirror MultiColumnListView default column widths.
+   C# (SetupFilterSync) updates them dynamically when columns are resized.
+*/
+.ppe-filter-row {
+    flex-direction: row;
+    align-items: stretch;
+    background-color: rgba(0, 0, 0, 0.04);
+    border-bottom-width: 1px;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.ppe-filter-cell {
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 3px;
+    border-right-width: 1px;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Initial widths – overridden at runtime to match actual column widths */
+.ppe-filter-col-key     { width: 200px; flex-shrink: 0; }
+.ppe-filter-col-type    { width: 80px;  flex-shrink: 0; }
+.ppe-filter-col-value   { flex-grow: 1; min-width: 60px; }
+.ppe-filter-col-actions { width: 28px;  flex-shrink: 0; }
+
+.ppe-filter-field {
+    flex-grow: 1;
+    margin: 0;
+    min-width: 0;
+}
+
+.ppe-filter-field > .unity-base-field__label {
+    display: none;
+}
+
+.ppe-filter-field .unity-base-text-field__input {
+    border-radius: 2px;
+    padding: 1px 4px;
+    font-size: 11px;
+}
+
+/* ─── Status Bar ──────────────────────────────────────────── */
+.ppe-status {
+    padding: 2px 6px;
+    font-size: 11px;
+    border-bottom-width: 1px;
+    border-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.04);
+    white-space: nowrap;
+    overflow: hidden;
+    -unity-text-overflow-position: end;
+    text-overflow: ellipsis;
+}
+
+/* ─── Error Banner (duplicate keys) ──────────────────────── */
+.ppe-error-banner {
+    padding: 5px 10px;
+    background-color: rgba(210, 90, 0, 0.14);
+    border-bottom-width: 1px;
+    border-color: rgba(210, 90, 0, 0.55);
+    color: rgb(200, 80, 0);
+    -unity-font-style: bold;
+    font-size: 11px;
+    white-space: normal;
+}
+
+/* ─── List Container ──────────────────────────────────────── */
+.ppe-list-container {
+    flex-grow: 1;
+}
+
+/* ─── List View ───────────────────────────────────────────── */
+.ppe-list {
+    flex-grow: 1;
+    min-height: 100px;
+}
+
+/* ─── Cells (shared container per column-cell) ────────────── */
+.ppe-cell {
+    flex-direction: row;
+    align-items: center;
+    padding: 1px 4px;
+    overflow: hidden;
+}
+
+/* Base field (TextField, DropdownField) inside a cell */
+.ppe-cell-field {
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}
+
+/* Hide the auto-generated label of BaseField derivatives */
+.ppe-cell-field > .unity-base-field__label {
+    display: none;
+    min-width: 0;
+    width: 0;
+}
+
+/* Make the inner input fill height and stay transparent/borderless (default) */
+.ppe-cell-field .unity-base-text-field__input,
+.ppe-cell-field .unity-enum-field__input,
+.ppe-cell-field .unity-dropdown-field__input {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    padding: 0 2px;
+    min-width: 0;
+    align-self: stretch;
+}
+
+/* Read-only key field: slightly muted */
+.ppe-field--readonly .unity-base-text-field__input {
+    opacity: 0.6;
+}
+
+/* ─── Row States ──────────────────────────────────────────── */
+/* Odd rows: subtle darker stripe to improve row readability   */
+.ppe-row--odd {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+/* New row  →  green tint */
+.ppe-row--new {
+    background-color: rgba(30, 160, 30, 0.20);
+}
+
+/* Deleted row  →  red tint + slight fade */
+.ppe-row--deleted {
+    background-color: rgba(200, 30, 30, 0.20);
+}
+.ppe-row--deleted .ppe-cell-field {
+    opacity: 0.45;
+}
+
+/* Edited row  →  yellow tint */
+.ppe-row--edited {
+    background-color: rgba(255, 199, 1, 0.47);
+}
+
+/* Duplicate key row  →  orange tint (overrides new/edited) */
+.ppe-row--duplicate {
+    background-color: rgba(210, 100, 0, 0.24);
+}
+
+/* ─── Validation ──────────────────────────────────────────── */
+/* Red border on the inner input when value is invalid */
+.ppe-field--invalid .unity-base-text-field__input {
+    border-color: rgb(220, 50, 50);
+    border-width: 1px;
+    border-radius: 2px;
+}
+
+/* ─── Visible value field ─────────────────────────────────── */
+/* The value column's TextField gets an explicit visible box    */
+/* so users can clearly see and edit the entry.                 */
+.ppe-cell-field--value .unity-base-text-field__input {
+    background-color: rgba(0, 0, 0, 0.07);
+    border-width: 1px;
+    border-color: rgba(128, 128, 128, 0.28);
+    border-radius: 2px;
+    padding: 0 5px;
+    min-width: 40px;
+}
+.ppe-cell-field--value .unity-base-text-field__input:focus {
+    background-color: rgba(255, 255, 255, 0.10);
+    border-color: rgba(90, 150, 255, 0.70);
+}
+/* placeholder dimmed */
+.ppe-cell-field--value .unity-base-text-field__input > .unity-base-text-field__input--placeholder {
+    opacity: 0.45;
+}
+
+/* Warning icon shown next to invalid value field */
+.ppe-error-icon {
+    color: rgb(220, 50, 50);
+    font-size: 12px;
+    -unity-font-style: bold;
+    width: 14px;
+    flex-shrink: 0;
+    margin-left: 2px;
+    align-self: center;  /* stay vertically centered in stretched cell */
+}
+
+/* Duplicate-key warning icon in the Key column */
+.ppe-dup-icon {
+    color: rgb(200, 90, 0);
+    font-size: 12px;
+    -unity-font-style: bold;
+    width: 14px;
+    flex-shrink: 0;
+    margin-left: 2px;
+    align-self: center;  /* stay vertically centered in stretched cell */
+}
+
+/* Value cell needs room for the error icon */
+.ppe-cell--value {
+    flex-direction: row;
+    align-items: stretch;
+}
+.ppe-cell--value .ppe-cell-field {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+/* ─── Actions Column ──────────────────────────────────────── */
+/* Actions cell keeps children centred (button must not stretch) */
+.ppe-cell--actions {
+    justify-content: center;
+    align-items: center;
+    padding: 1px 3px;
+}
+
+.ppe-delete-btn {
+    width: 22px;
+    height: 18px;
+    padding: 0;
+    font-size: 11px;
+    -unity-font-style: bold;
+    border-radius: 3px;
+    border-width: 1px;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.ppe-delete-btn:hover {
+    background-color: rgba(200, 50, 50, 0.30);
+    border-color: rgba(200, 50, 50, 0.60);
+}
+
+/* Restore button (when row is marked for delete) */
+.ppe-row--deleted .ppe-delete-btn {
+    background-color: rgba(40, 160, 40, 0.20);
+    border-color: rgba(40, 160, 40, 0.50);
+}
+.ppe-row--deleted .ppe-delete-btn:hover {
+    background-color: rgba(40, 160, 40, 0.40);
+}
+
+/* ─── Column header sort indicator (handled by Unity) ─────── */
+/* No overrides needed; MultiColumnListView draws its own arrows */

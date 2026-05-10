@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+
+    <!-- ── Toolbar ───────────────────────────────────────────────────────── -->
+    <uie:Toolbar class="ppe-toolbar">
+        <uie:ToolbarButton name="btn-add-new"    class="ppe-toolbar-btn" text="✚ Add New" />
+        <uie:ToolbarButton name="btn-delete-all" class="ppe-toolbar-btn" text="✕ Delete All" />
+        <uie:ToolbarSpacer class="ppe-toolbar-spacer" />
+        <uie:ToolbarButton name="btn-save"       class="ppe-toolbar-btn" text="💾 Save" />
+        <uie:ToolbarButton name="btn-refresh"    class="ppe-toolbar-btn" text="↺ Refresh" />
+        <uie:ToolbarButton name="btn-export"     class="ppe-toolbar-btn" text="⬆ Export JSON" />
+        <uie:ToolbarButton name="btn-import"     class="ppe-toolbar-btn" text="⬇ Import JSON" />
+    </uie:Toolbar>
+
+    <!-- ── Status bar ────────────────────────────────────────────────────── -->
+    <ui:Label name="status-label" class="ppe-status" />
+
+    <!-- ── Error banner (hidden by default via ppe-hidden; shown on duplicates) -->
+    <ui:Label name="error-banner" class="ppe-error-banner ppe-hidden" />
+
+    <!-- ── Per-column filter row ─────────────────────────────────────────── -->
+    <!--
+        Initial widths mirror the MultiColumnListView default column widths:
+          Key (200 px) | Type (80 px) | Value (flex) | Actions (28 px)
+        After the list view is rendered, C# syncs these widths to the actual
+        column widths so resizing a column also resizes the filter field.
+    -->
+    <ui:VisualElement class="ppe-filter-row">
+        <ui:VisualElement class="ppe-filter-cell ppe-filter-col-key">
+            <ui:TextField name="filter-key"
+                          class="ppe-filter-field"
+                          is-delayed="false"
+                          placeholder-text="🔍 Key…" />
+        </ui:VisualElement>
+        <ui:VisualElement class="ppe-filter-cell ppe-filter-col-type">
+            <ui:TextField name="filter-type"
+                          class="ppe-filter-field"
+                          is-delayed="false"
+                          placeholder-text="🔍 Type…" />
+        </ui:VisualElement>
+        <ui:VisualElement class="ppe-filter-cell ppe-filter-col-value">
+            <ui:TextField name="filter-value"
+                          class="ppe-filter-field"
+                          is-delayed="false"
+                          placeholder-text="🔍 Value…" />
+        </ui:VisualElement>
+        <ui:VisualElement class="ppe-filter-col-actions" />
+    </ui:VisualElement>
+
+    <!-- ── List view placeholder (MultiColumnListView injected from C#) ─── -->
+    <ui:VisualElement name="row-resize-handle" class="ppe-row-resize-handle" tooltip="Drag to resize rows" />
+    <ui:VisualElement name="list-container" class="ppe-list-container" />
+
+</ui:UXML>
+

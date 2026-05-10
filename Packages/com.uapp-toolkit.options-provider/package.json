@@ -5,7 +5,9 @@
   "description": "Tools for application state savign.",
   "unity": "2021.3",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  },
   "keywords": [
     "save",
     "tool"

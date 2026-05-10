@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+    PlayerPrefsEditor.Templates.uxml
+    Hidden cell templates cloned in C# via VisualTreeAsset.CloneTree for makeCell.
+    This file is never added to the scene hierarchy directly.
+-->
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+
+    <!-- ── Key column cell ───────────────────────────────────────────────── -->
+    <ui:VisualElement name="tpl-cell-key" class="ppe-cell">
+        <ui:TextField name="key-field"  class="ppe-cell-field" is-delayed="true" />
+        <ui:Label     name="dup-icon"   text="⚠" class="ppe-dup-icon ppe-hidden" />
+    </ui:VisualElement>
+
+    <!-- ── Type column cell ──────────────────────────────────────────────── -->
+    <ui:VisualElement name="tpl-cell-type" class="ppe-cell">
+        <ui:DropdownField name="type-field" class="ppe-cell-field" />
+    </ui:VisualElement>
+
+    <!-- ── Value column cell ─────────────────────────────────────────────── -->
+    <ui:VisualElement name="tpl-cell-value" class="ppe-cell ppe-cell--value">
+        <ui:TextField name="value-field" class="ppe-cell-field ppe-cell-field--value" is-delayed="true" placeholder-text="(empty)" />
+        <ui:Label     name="err-icon"   text="⚠" class="ppe-error-icon ppe-hidden" />
+    </ui:VisualElement>
+
+    <!-- ── Actions column cell ───────────────────────────────────────────── -->
+    <ui:VisualElement name="tpl-cell-actions" class="ppe-cell ppe-cell--actions">
+        <ui:Button name="del-btn" class="ppe-delete-btn" />
+    </ui:VisualElement>
+
+</ui:UXML>
+
