@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
+using Unity.Plastic.Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -29,6 +30,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string NameFilterValue   = "filter-value";
         private const string NameListContainer = "list-container";
         private const string NameList          = "ppe-list";
+        private const string NameTabKeys       = "tab-keys";
+        private const string NameTabIgnored    = "tab-ignored";
+        private const string NameSelectToggle  = "select-toggle";
+        private const string NameFavBtn        = "fav-btn";
+        private const string NameIgnoreBtn     = "ignore-btn";
         private const string NameKeyField      = "key-field";
         private const string NameTypeField     = "type-field";
         private const string NameValueField    = "value-field";
@@ -39,6 +45,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         // ─── Toolbar button names ─────────────────────────────────────────────
 
         private const string NameBtnAddNew    = "btn-add-new";
+        private const string NameBtnDeleteSelected = "btn-delete-selected";
         private const string NameBtnDeleteAll = "btn-delete-all";
         private const string NameBtnSave      = "btn-save";
         private const string NameBtnRefresh   = "btn-refresh";
@@ -48,6 +55,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         // ─── Cell template names ──────────────────────────────────────────────
 
         private const string TplCellKey     = "tpl-cell-key";
+        private const string TplCellSelect  = "tpl-cell-select";
+        private const string TplCellFavorite = "tpl-cell-favorite";
         private const string TplCellType    = "tpl-cell-type";
         private const string TplCellValue   = "tpl-cell-value";
         private const string TplCellActions = "tpl-cell-actions";
@@ -63,9 +72,12 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string ClassRowEdited     = "ppe-row--edited";
         private const string ClassRowDuplicate  = "ppe-row--duplicate";
         private const string ClassRowOdd        = "ppe-row--odd";
+        private const string ClassTabActive     = "ppe-tab--active";
 
         // ─── Column names ─────────────────────────────────────────────────────
 
+        private const string ColSelect  = "select";
+        private const string ColFavorite = "favorite";
         private const string ColKey     = "key";
         private const string ColType    = "type";
         private const string ColValue   = "value";
@@ -89,6 +101,20 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string BtnTextDelete  = "✕";
         private const string TooltipRestore = "Restore";
         private const string TooltipDelete  = "Delete";
+        private const string BtnTextFavorite = "★";
+        private const string BtnTextNotFavorite = "☆";
+        private const string TooltipFavorite = "Remove from favorites";
+        private const string TooltipNotFavorite = "Add to favorites";
+        private const string BtnTextIgnore = "⊘";
+        private const string BtnTextUnignore = "↩";
+        private const string TooltipIgnore = "Move to ignored keys";
+        private const string TooltipUnignore = "Return to main keys";
+
+        // ─── Filters / tabs ───────────────────────────────────────────────────
+
+        private const string TypeFilterAll = "All";
+        private const string TabTextKeys = "Keys";
+        private const string TabTextIgnoredFmt = "Ignored ({0})";
 
         // ─── New-entry defaults ───────────────────────────────────────────────
 
@@ -138,6 +164,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private const string NameRowResizeHandle  = "row-resize-handle";
         private const string EditorPrefsRowHeight = "UAppToolKit.PlayerPrefsEditor.RowHeight";
+        private const string EditorPrefsFavorites = "UAppToolKit.PlayerPrefsEditor.FavoriteKeys";
+        private const string EditorPrefsIgnored   = "UAppToolKit.PlayerPrefsEditor.IgnoredKeys";
         private const float  RowHeightMin         = 18f;
         private const float  RowHeightMax         = 120f;
         private const float  RowHeightDefault     = 24f;
@@ -146,6 +174,13 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private List<PlayerPrefStore> _prefs          = new List<PlayerPrefStore>();
         private List<PlayerPrefStore> _displayedPrefs = new List<PlayerPrefStore>();
+        private readonly HashSet<string> _favoriteKeys =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _ignoredKeys =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<PlayerPrefStore> _selectedPrefs =
+            new HashSet<PlayerPrefStore>();
+        private bool _showIgnoredTab;
 
         // ─── Per-column filter state ──────────────────────────────────────────
 
@@ -163,6 +198,9 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private MultiColumnListView _listView;
         private Label               _statusLabel;
         private Label               _errorBanner;
+        private ToolbarButton       _deleteSelectedButton;
+        private ToolbarToggle       _tabKeys;
+        private ToolbarToggle       _tabIgnored;
         private VisualTreeAsset     _cellTemplatesAsset;
         private bool                _headerSyncRegistered;
         private VisualElement       _filterColKeyCell;
@@ -213,6 +251,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 ? new WindowsPlayerPrefsReader()
                 : new MacPlayerPrefsReader();
 
+            LoadPersistentKeySets();
             ConnectUxmlElements();
             BuildListView();
             SetupRowResizeHandle();
@@ -233,22 +272,54 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             _filterColKeyCell  = rootVisualElement.Q<VisualElement>(null, ClassFilterColKey);
             _filterColTypeCell = rootVisualElement.Q<VisualElement>(null, ClassFilterColType);
 
+            _deleteSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnDeleteSelected);
+            _tabKeys              = rootVisualElement.Q<ToolbarToggle>(NameTabKeys);
+            _tabIgnored           = rootVisualElement.Q<ToolbarToggle>(NameTabIgnored);
+
             rootVisualElement.Q<ToolbarButton>(NameBtnAddNew).clicked    += AddNewPref;
+            _deleteSelectedButton.clicked += DeleteSelectedItems;
             rootVisualElement.Q<ToolbarButton>(NameBtnDeleteAll).clicked += MarkAllForDelete;
             rootVisualElement.Q<ToolbarButton>(NameBtnSave).clicked      += SaveAll;
             rootVisualElement.Q<ToolbarButton>(NameBtnRefresh).clicked   += RefreshPlayerPrefs;
             rootVisualElement.Q<ToolbarButton>(NameBtnExport).clicked    += ExportToJson;
             rootVisualElement.Q<ToolbarButton>(NameBtnImport).clicked    += ImportFromJson;
 
+            _tabKeys.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                    SetIgnoredTabVisible(false);
+                else if (!_showIgnoredTab)
+                    _tabKeys.SetValueWithoutNotify(true);
+            });
+
+            _tabIgnored.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                    SetIgnoredTabVisible(true);
+                else if (_showIgnoredTab)
+                    _tabIgnored.SetValueWithoutNotify(true);
+            });
+
             rootVisualElement.Q<TextField>(NameFilterKey)
                 .RegisterValueChangedCallback(
                     evt => { _keyFilter   = evt.newValue; ApplyFilter(); });
-            rootVisualElement.Q<TextField>(NameFilterType)
-                .RegisterValueChangedCallback(
-                    evt => { _typeFilter  = evt.newValue; ApplyFilter(); });
+
+            var typeFilter = rootVisualElement.Q<DropdownField>(NameFilterType);
+            typeFilter.choices = new List<string> { TypeFilterAll };
+            typeFilter.choices.AddRange(PrefValue.AllTypeDisplayNames);
+            typeFilter.SetValueWithoutNotify(TypeFilterAll);
+            typeFilter.RegisterValueChangedCallback(evt =>
+            {
+                _typeFilter = evt.newValue == TypeFilterAll ? "" : evt.newValue;
+                ApplyFilter();
+            });
+
             rootVisualElement.Q<TextField>(NameFilterValue)
                 .RegisterValueChangedCallback(
                     evt => { _valueFilter = evt.newValue; ApplyFilter(); });
+
+            UpdateTabLabels();
+            UpdateDeleteSelectedButton();
         }
 
         // =====================================================================
@@ -270,6 +341,78 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         }
 
         // =====================================================================
+        // Persisted editor-only key sets
+        // =====================================================================
+
+        private void LoadPersistentKeySets()
+        {
+            LoadStringSet(ProjectEditorPrefsKey(EditorPrefsFavorites), _favoriteKeys);
+            LoadStringSet(ProjectEditorPrefsKey(EditorPrefsIgnored),   _ignoredKeys);
+        }
+
+        private void SavePersistentKeySets()
+        {
+            SaveStringSet(ProjectEditorPrefsKey(EditorPrefsFavorites), _favoriteKeys);
+            SaveStringSet(ProjectEditorPrefsKey(EditorPrefsIgnored),   _ignoredKeys);
+        }
+
+        private static void LoadStringSet(string key, HashSet<string> target)
+        {
+            target.Clear();
+            string data = EditorPrefs.GetString(key, "");
+            if (string.IsNullOrEmpty(data)) return;
+
+            try
+            {
+                var values = JsonConvert.DeserializeObject<List<string>>(data);
+                if (values == null) return;
+                foreach (var value in values)
+                    if (!string.IsNullOrEmpty(value))
+                        target.Add(value);
+            }
+            catch
+            {
+                // Ignore corrupt editor-only metadata; PlayerPrefs data remains untouched.
+            }
+        }
+
+        private static void SaveStringSet(string key, HashSet<string> source)
+        {
+            string data = JsonConvert.SerializeObject(
+                source.Where(s => !string.IsNullOrEmpty(s)).OrderBy(s => s).ToList());
+            EditorPrefs.SetString(key, data);
+        }
+
+        private static string ProjectEditorPrefsKey(string baseKey) =>
+            baseKey + "." + Application.dataPath.Replace('\\', '/');
+
+        private bool IsFavorite(PlayerPrefStore pref) =>
+            pref != null && _favoriteKeys.Contains(pref.name);
+
+        private bool IsIgnored(PlayerPrefStore pref) =>
+            pref != null && _ignoredKeys.Contains(pref.name);
+
+        private void ReplaceTrackedKey(string oldKey, string newKey)
+        {
+            if (string.Equals(oldKey, newKey, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            bool changed = false;
+            if (!string.IsNullOrEmpty(oldKey) && _favoriteKeys.Remove(oldKey))
+            {
+                if (!string.IsNullOrEmpty(newKey)) _favoriteKeys.Add(newKey);
+                changed = true;
+            }
+            if (!string.IsNullOrEmpty(oldKey) && _ignoredKeys.Remove(oldKey))
+            {
+                if (!string.IsNullOrEmpty(newKey)) _ignoredKeys.Add(newKey);
+                changed = true;
+            }
+
+            if (changed) SavePersistentKeySets();
+        }
+
+        // =====================================================================
         // Status bar
         // =====================================================================
 
@@ -277,11 +420,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         {
             if (_statusLabel == null) return;
 
-            int total   = _prefs.Count;
+            int total   = _prefs.Count(p => IsInCurrentTab(p));
             int shown   = _displayedPrefs.Count;
-            int newCnt  = _prefs.Count(p => p.isNew);
-            int delCnt  = _prefs.Count(p => p.isMarkedForDelete);
-            int editCnt = _prefs.Count(p => p.Changed);
+            int newCnt  = _prefs.Count(p => IsInCurrentTab(p) && p.isNew);
+            int delCnt  = _prefs.Count(p => IsInCurrentTab(p) && p.isMarkedForDelete);
+            int editCnt = _prefs.Count(p => IsInCurrentTab(p) && p.Changed);
 
             string project   = string.Format(StatusProjectFmt,
                 PlayerSettings.companyName, PlayerSettings.productName);
@@ -295,6 +438,47 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             if (delCnt  > 0) extra += StatusSeparator + string.Format(StatusDeletedFmt, delCnt);
 
             _statusLabel.text = project + StatusSeparator + countPart + extra;
+            UpdateTabLabels();
+            UpdateDeleteSelectedButton();
+        }
+
+        private bool IsInCurrentTab(PlayerPrefStore pref) =>
+            IsIgnored(pref) == _showIgnoredTab;
+
+        private void SetIgnoredTabVisible(bool showIgnored)
+        {
+            if (_showIgnoredTab == showIgnored)
+            {
+                SyncTabToggles();
+                return;
+            }
+
+            _showIgnoredTab = showIgnored;
+            ClearSelectedPrefs();
+            SyncTabToggles();
+            ApplyFilter();
+        }
+
+        private void SyncTabToggles()
+        {
+            _tabKeys?.SetValueWithoutNotify(!_showIgnoredTab);
+            _tabIgnored?.SetValueWithoutNotify(_showIgnoredTab);
+            _tabKeys?.EnableInClassList(ClassTabActive, !_showIgnoredTab);
+            _tabIgnored?.EnableInClassList(ClassTabActive, _showIgnoredTab);
+        }
+
+        private void UpdateTabLabels()
+        {
+            if (_tabKeys != null)
+                _tabKeys.text = TabTextKeys;
+            if (_tabIgnored != null)
+                _tabIgnored.text = string.Format(
+                    TabTextIgnoredFmt, _prefs.Count(IsIgnored));
+        }
+
+        private void UpdateDeleteSelectedButton()
+        {
+            _deleteSelectedButton?.SetEnabled(_selectedPrefs.Count > 0);
         }
 
         // =====================================================================
@@ -336,12 +520,13 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private void ApplyFilter()
         {
             _displayedPrefs.Clear();
+            _selectedPrefs.RemoveWhere(p => !_prefs.Contains(p) || !IsInCurrentTab(p));
 
             if (!IsFilterActive)
-                _displayedPrefs.AddRange(_prefs);
+                _displayedPrefs.AddRange(_prefs.Where(IsInCurrentTab));
             else
                 foreach (var p in _prefs)
-                    if (MatchesAllFilters(p))
+                    if (IsInCurrentTab(p) && MatchesAllFilters(p))
                         _displayedPrefs.Add(p);
 
             if (_listView != null)
@@ -360,8 +545,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 return false;
 
             if (!string.IsNullOrEmpty(_typeFilter) &&
-                pref.value.TypeDisplayName
-                    .IndexOf(_typeFilter, StringComparison.OrdinalIgnoreCase) < 0)
+                !string.Equals(pref.value.TypeDisplayName, _typeFilter,
+                    StringComparison.OrdinalIgnoreCase))
                 return false;
 
             if (!string.IsNullOrEmpty(_valueFilter) &&
@@ -379,6 +564,80 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         {
             var columns = new Columns();
 
+            // ── Selection checkbox ───────────────────────────────────────────
+            var selectCol = new Column
+            {
+                name = ColSelect, title = "",
+                width = 28, minWidth = 28, maxWidth = 28,
+                sortable = false, resizable = false,
+            };
+            selectCol.makeCell = () =>
+            {
+                var cell = CloneCellTemplate(TplCellSelect);
+                var toggle = cell.Q<Toggle>(NameSelectToggle);
+                toggle.RegisterValueChangedCallback(evt =>
+                {
+                    if (toggle.userData is not PlayerPrefStore pref) return;
+                    if (evt.newValue)
+                        _selectedPrefs.Add(pref);
+                    else
+                        _selectedPrefs.Remove(pref);
+                    UpdateDeleteSelectedButton();
+                });
+                return cell;
+            };
+            selectCol.bindCell = (element, index) =>
+            {
+                var pref = _displayedPrefs[index];
+                var toggle = element.Q<Toggle>(NameSelectToggle);
+                toggle.userData = pref;
+                toggle.SetValueWithoutNotify(_selectedPrefs.Contains(pref));
+                toggle.SetEnabled(!pref.isMarkedForDelete);
+                ApplyRowStyle(element, pref, index);
+            };
+            selectCol.unbindCell = (element, _) =>
+            {
+                var toggle = element.Q<Toggle>(NameSelectToggle);
+                if (toggle != null) toggle.userData = null;
+            };
+            columns.Add(selectCol);
+
+            // ── Favorite ─────────────────────────────────────────────────────
+            var favoriteCol = new Column
+            {
+                name = ColFavorite, title = "",
+                width = 28, minWidth = 28, maxWidth = 28,
+                sortable = false, resizable = false,
+            };
+            favoriteCol.makeCell = () =>
+            {
+                var cell = CloneCellTemplate(TplCellFavorite);
+                var btn = cell.Q<Button>(NameFavBtn);
+                btn.clicked += () =>
+                {
+                    if (btn.userData is not PlayerPrefStore pref) return;
+                    ToggleFavorite(pref);
+                };
+                return cell;
+            };
+            favoriteCol.bindCell = (element, index) =>
+            {
+                var pref = _displayedPrefs[index];
+                var btn = element.Q<Button>(NameFavBtn);
+                bool isFavorite = IsFavorite(pref);
+                btn.userData = pref;
+                btn.text = isFavorite ? BtnTextFavorite : BtnTextNotFavorite;
+                btn.tooltip = isFavorite ? TooltipFavorite : TooltipNotFavorite;
+                btn.SetEnabled(!pref.isMarkedForDelete);
+                ApplyRowStyle(element, pref, index);
+            };
+            favoriteCol.unbindCell = (element, _) =>
+            {
+                var btn = element.Q<Button>(NameFavBtn);
+                if (btn != null) btn.userData = null;
+            };
+            columns.Add(favoriteCol);
+
             // ── Key ──────────────────────────────────────────────────────────
             var keyCol = new Column
             {
@@ -392,8 +651,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 tf.RegisterValueChangedCallback(evt =>
                 {
                     if (tf.userData is not PlayerPrefStore pref || !pref.isNew) return;
+                    ReplaceTrackedKey(pref.name, evt.newValue);
                     pref.name = evt.newValue;
                     ValidateDuplicates();
+                    SortPrefs();
                     ApplyFilter();
                     UpdateStatus();
                 });
@@ -443,6 +704,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                     string targetId = PrefValue.DisplayToTypeId(evt.newValue);
                     if (pref.value.TypeId == targetId) return;
                     pref.value = pref.value.ConvertTo(targetId);
+                    SortPrefs();
+                    ApplyFilter();
                     _listView.RefreshItems();
                     UpdateStatus();
                 });
@@ -513,16 +776,22 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             var actCol = new Column
             {
                 name = ColActions, title = "",
-                width = 28, minWidth = 28, maxWidth = 28,
+                width = 56, minWidth = 56, maxWidth = 56,
                 sortable = false, resizable = false,
             };
             actCol.makeCell = () =>
             {
                 var cell = CloneCellTemplate(TplCellActions);
-                var btn  = cell.Q<Button>(NameDelBtn);
-                btn.clicked += () =>
+                var ignoreBtn = cell.Q<Button>(NameIgnoreBtn);
+                var delBtn    = cell.Q<Button>(NameDelBtn);
+                ignoreBtn.clicked += () =>
                 {
-                    if (btn.userData is not PlayerPrefStore pref) return;
+                    if (ignoreBtn.userData is not PlayerPrefStore pref) return;
+                    ToggleIgnored(pref);
+                };
+                delBtn.clicked += () =>
+                {
+                    if (delBtn.userData is not PlayerPrefStore pref) return;
                     ToggleDelete(pref);
                 };
                 return cell;
@@ -530,16 +799,26 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             actCol.bindCell = (element, index) =>
             {
                 var pref = _displayedPrefs[index];
-                var btn  = element.Q<Button>(NameDelBtn);
-                btn.userData = pref;
-                btn.text    = pref.isMarkedForDelete ? BtnTextRestore : BtnTextDelete;
-                btn.tooltip = pref.isMarkedForDelete ? TooltipRestore  : TooltipDelete;
+                var ignoreBtn = element.Q<Button>(NameIgnoreBtn);
+                var delBtn    = element.Q<Button>(NameDelBtn);
+                bool isIgnored = IsIgnored(pref);
+
+                ignoreBtn.userData = pref;
+                ignoreBtn.text = isIgnored ? BtnTextUnignore : BtnTextIgnore;
+                ignoreBtn.tooltip = isIgnored ? TooltipUnignore : TooltipIgnore;
+                ignoreBtn.SetEnabled(!pref.isMarkedForDelete);
+
+                delBtn.userData = pref;
+                delBtn.text    = pref.isMarkedForDelete ? BtnTextRestore : BtnTextDelete;
+                delBtn.tooltip = pref.isMarkedForDelete ? TooltipRestore  : TooltipDelete;
                 ApplyRowStyle(element, pref, index);
             };
             actCol.unbindCell = (element, _) =>
             {
-                var btn = element.Q<Button>(NameDelBtn);
-                if (btn != null) btn.userData = null;
+                var ignoreBtn = element.Q<Button>(NameIgnoreBtn);
+                var delBtn    = element.Q<Button>(NameDelBtn);
+                if (ignoreBtn != null) ignoreBtn.userData = null;
+                if (delBtn    != null) delBtn.userData    = null;
             };
             columns.Add(actCol);
 
@@ -549,7 +828,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 name                          = NameList,
                 itemsSource                   = _displayedPrefs,
                 fixedItemHeight               = 24,
-                selectionType                 = SelectionType.Multiple,
+                selectionType                 = SelectionType.None,
                 sortingMode                   = ColumnSortingMode.Custom,
                 virtualizationMethod          = CollectionVirtualizationMethod.FixedHeight,
                 showAlternatingRowBackgrounds = AlternatingRowBackground.None,
@@ -668,19 +947,38 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void OnColumnSortingChanged()
         {
+            SortPrefs();
+            ApplyFilter();
+        }
+
+        private void SortPrefs()
+        {
             var descs = _listView.sortedColumns?.ToList()
                         ?? new List<SortColumnDescription>();
+
+            int CompareFavorites(PlayerPrefStore a, PlayerPrefStore b)
+            {
+                int cmp = IsFavorite(b).CompareTo(IsFavorite(a));
+                return cmp != 0 ? cmp : 0;
+            }
 
             if (descs.Count == 0)
             {
                 _prefs.Sort((a, b) =>
-                    string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+                {
+                    int favCmp = CompareFavorites(a, b);
+                    if (favCmp != 0) return favCmp;
+                    return string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase);
+                });
             }
             else
             {
                 var primary = descs[0];
                 int Compare(PlayerPrefStore a, PlayerPrefStore b)
                 {
+                    int favCmp = CompareFavorites(a, b);
+                    if (favCmp != 0) return favCmp;
+
                     int cmp = primary.columnName switch
                     {
                         ColKey   => string.Compare(a.name, b.name,
@@ -697,8 +995,6 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 }
                 _prefs.Sort(Compare);
             }
-
-            ApplyFilter();
         }
 
         // =====================================================================
@@ -707,23 +1003,57 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void AddNewPref()
         {
+            if (_showIgnoredTab)
+                SetIgnoredTabVisible(false);
+
             var pref = new PlayerPrefStore(DefaultNewKey, PrefValue.Create(DefaultNewTypeId, ""))
             {
                 isNew = true,
             };
             _prefs.Add(pref);
             ValidateDuplicates();
+            SortPrefs();
             ApplyFilter();
-            _listView.ScrollToItem(_displayedPrefs.Count - 1);
+            _listView.ScrollToItem(Mathf.Max(0, _displayedPrefs.IndexOf(pref)));
         }
 
         private void MarkAllForDelete()
         {
             foreach (var p in _prefs)
+            {
+                if (IsIgnored(p)) continue;
                 p.isMarkedForDelete = true;
+                _selectedPrefs.Remove(p);
+            }
             ValidateDuplicates();
             _listView.RefreshItems();
             UpdateStatus();
+        }
+
+        private void ToggleFavorite(PlayerPrefStore pref)
+        {
+            if (pref == null || string.IsNullOrEmpty(pref.name)) return;
+
+            if (!_favoriteKeys.Remove(pref.name))
+                _favoriteKeys.Add(pref.name);
+
+            SavePersistentKeySets();
+            SortPrefs();
+            ApplyFilter();
+        }
+
+        private void ToggleIgnored(PlayerPrefStore pref)
+        {
+            if (pref == null || string.IsNullOrEmpty(pref.name)) return;
+
+            if (!_ignoredKeys.Remove(pref.name))
+                _ignoredKeys.Add(pref.name);
+
+            _selectedPrefs.Remove(pref);
+            SavePersistentKeySets();
+            ValidateDuplicates();
+            SortPrefs();
+            ApplyFilter();
         }
 
         private void ToggleDelete(PlayerPrefStore pref)
@@ -731,12 +1061,15 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             if (pref.isNew)
             {
                 _prefs.Remove(pref);
+                _selectedPrefs.Remove(pref);
                 ValidateDuplicates();
                 ApplyFilter();
             }
             else
             {
                 pref.isMarkedForDelete = !pref.isMarkedForDelete;
+                if (pref.isMarkedForDelete)
+                    _selectedPrefs.Remove(pref);
                 ValidateDuplicates();
                 _listView.RefreshItems();
                 UpdateStatus();
@@ -757,6 +1090,9 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 if (pref.isMarkedForDelete)
                 {
                     PlayerPrefs.DeleteKey(pref.name);
+                    _favoriteKeys.Remove(pref.name);
+                    _ignoredKeys.Remove(pref.name);
+                    _selectedPrefs.Remove(pref);
                     _prefs.RemoveAt(i);
                     continue;
                 }
@@ -765,15 +1101,16 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             }
 
             PlayerPrefs.Save();
+            SavePersistentKeySets();
             ApplyFilter();
         }
 
         private void RefreshPlayerPrefs()
         {
+            ClearSelectedPrefs();
             _prefs.Clear();
             _prefs.AddRange(_prefsReader.ReadAll());
-            _prefs.Sort((a, b) =>
-                string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+            SortPrefs();
             ValidateDuplicates();
             ApplyFilter();
         }
@@ -785,7 +1122,9 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 DialogTitleExport, "", defaultName, FileExtJson);
             if (string.IsNullOrEmpty(path)) return;
 
-            var exportable = _prefs.Where(p => !p.isMarkedForDelete).ToList();
+            var exportable = _prefs
+                .Where(p => !p.isMarkedForDelete && !IsIgnored(p))
+                .ToList();
             try
             {
                 File.WriteAllText(path,
@@ -848,6 +1187,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
             if (choice == 2) // Replace All
             {
+                ClearSelectedPrefs();
                 _prefs.Clear();
                 foreach (var imp in imported)
                 {
@@ -872,6 +1212,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             }
 
             ValidateDuplicates();
+            SortPrefs();
             ApplyFilter();
         }
 
@@ -882,6 +1223,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private void OnDisable()
         {
             EditorPrefs.SetFloat(EditorPrefsRowHeight, _rowHeight);
+            SavePersistentKeySets();
         }
 
         // =====================================================================
@@ -957,20 +1299,30 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var focused   = rootVisualElement.focusController?.focusedElement;
                 var focusedVe = focused as VisualElement;
                 if (focused is TextField ||
-                    focusedVe?.GetFirstAncestorOfType<TextField>() != null)
+                    focused is DropdownField ||
+                    focusedVe?.GetFirstAncestorOfType<TextField>() != null ||
+                    focusedVe?.GetFirstAncestorOfType<DropdownField>() != null)
                     return;
 
-                if (!_listView.selectedIndices.Any()) return;
+                if (_selectedPrefs.Count == 0) return;
 
                 DeleteSelectedItems();
                 evt.StopPropagation();
             });
         }
 
+        private void ClearSelectedPrefs()
+        {
+            if (_selectedPrefs.Count == 0) return;
+            _selectedPrefs.Clear();
+            _listView?.RefreshItems();
+            UpdateDeleteSelectedButton();
+        }
+
         private void DeleteSelectedItems()
         {
-            var toDelete = _listView.selectedItems
-                .OfType<PlayerPrefStore>()
+            var toDelete = _selectedPrefs
+                .Where(p => _prefs.Contains(p))
                 .ToList();
 
             if (toDelete.Count == 0) return;
@@ -983,7 +1335,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                     pref.isMarkedForDelete = true;
             }
 
-            _listView.ClearSelection();
+            _selectedPrefs.Clear();
             ValidateDuplicates();
             ApplyFilter();
         }

@@ -4,12 +4,20 @@
     <!-- ── Toolbar ───────────────────────────────────────────────────────── -->
     <uie:Toolbar class="ppe-toolbar">
         <uie:ToolbarButton name="btn-add-new"    class="ppe-toolbar-btn" text="✚ Add New" />
+        <uie:ToolbarButton name="btn-delete-selected" class="ppe-toolbar-btn" text="✕ Delete Selected" />
         <uie:ToolbarButton name="btn-delete-all" class="ppe-toolbar-btn" text="✕ Delete All" />
         <uie:ToolbarSpacer class="ppe-toolbar-spacer" />
         <uie:ToolbarButton name="btn-save"       class="ppe-toolbar-btn" text="💾 Save" />
         <uie:ToolbarButton name="btn-refresh"    class="ppe-toolbar-btn" text="↺ Refresh" />
         <uie:ToolbarButton name="btn-export"     class="ppe-toolbar-btn" text="⬆ Export JSON" />
         <uie:ToolbarButton name="btn-import"     class="ppe-toolbar-btn" text="⬇ Import JSON" />
+    </uie:Toolbar>
+
+    <!-- ── Tabs ──────────────────────────────────────────────────────────── -->
+    <uie:Toolbar class="ppe-tabs">
+        <uie:ToolbarToggle name="tab-keys"    class="ppe-tab" text="Keys" value="true" />
+        <uie:ToolbarToggle name="tab-ignored" class="ppe-tab" text="Ignored (0)" />
+        <uie:ToolbarSpacer class="ppe-toolbar-spacer" />
     </uie:Toolbar>
 
     <!-- ── Status bar ────────────────────────────────────────────────────── -->
@@ -21,11 +29,13 @@
     <!-- ── Per-column filter row ─────────────────────────────────────────── -->
     <!--
         Initial widths mirror the MultiColumnListView default column widths:
-          Key (200 px) | Type (80 px) | Value (flex) | Actions (28 px)
+          Select (28 px) | Star (28 px) | Key (200 px) | Type (80 px) | Value (flex) | Actions (56 px)
         After the list view is rendered, C# syncs these widths to the actual
         column widths so resizing a column also resizes the filter field.
     -->
     <ui:VisualElement class="ppe-filter-row">
+        <ui:VisualElement class="ppe-filter-col-select" />
+        <ui:VisualElement class="ppe-filter-col-favorite" />
         <ui:VisualElement class="ppe-filter-cell ppe-filter-col-key">
             <ui:TextField name="filter-key"
                           class="ppe-filter-field"
@@ -33,10 +43,8 @@
                           placeholder-text="🔍 Key…" />
         </ui:VisualElement>
         <ui:VisualElement class="ppe-filter-cell ppe-filter-col-type">
-            <ui:TextField name="filter-type"
-                          class="ppe-filter-field"
-                          is-delayed="false"
-                          placeholder-text="🔍 Type…" />
+            <ui:DropdownField name="filter-type"
+                              class="ppe-filter-field" />
         </ui:VisualElement>
         <ui:VisualElement class="ppe-filter-cell ppe-filter-col-value">
             <ui:TextField name="filter-value"

@@ -6,6 +6,16 @@
 -->
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
 
+    <!-- ── Selection column cell ─────────────────────────────────────────── -->
+    <ui:VisualElement name="tpl-cell-select" class="ppe-cell ppe-cell--select">
+        <ui:Toggle name="select-toggle" class="ppe-select-toggle" />
+    </ui:VisualElement>
+
+    <!-- ── Favorite column cell ──────────────────────────────────────────── -->
+    <ui:VisualElement name="tpl-cell-favorite" class="ppe-cell ppe-cell--favorite">
+        <ui:Button name="fav-btn" class="ppe-icon-btn ppe-fav-btn" />
+    </ui:VisualElement>
+
     <!-- ── Key column cell ───────────────────────────────────────────────── -->
     <ui:VisualElement name="tpl-cell-key" class="ppe-cell">
         <ui:TextField name="key-field"  class="ppe-cell-field" is-delayed="true" />
@@ -25,6 +35,7 @@
 
     <!-- ── Actions column cell ───────────────────────────────────────────── -->
     <ui:VisualElement name="tpl-cell-actions" class="ppe-cell ppe-cell--actions">
+        <ui:Button name="ignore-btn" class="ppe-icon-btn ppe-ignore-btn" />
         <ui:Button name="del-btn" class="ppe-delete-btn" />
     </ui:VisualElement>
 
