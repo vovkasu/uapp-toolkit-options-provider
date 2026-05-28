@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.UIElements;
 using Unity.Plastic.Newtonsoft.Json;
@@ -50,6 +51,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string NameBtnRestoreSelected = "btn-restore-selected";
         private const string NameBtnDeleteSelected = "btn-delete-selected";
         private const string NameBtnDeleteAll = "btn-delete-all";
+        private const string NameBtnDeleteFiltered = "btn-delete-filtered";
         private const string NameBtnSave      = "btn-save";
         private const string NameBtnRefresh   = "btn-refresh";
         private const string NameBtnExport    = "btn-export";
@@ -65,7 +67,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string TplCellType    = "tpl-cell-type";
         private const string TplCellValue   = "tpl-cell-value";
         private const string TplCellEdit    = "tpl-cell-edit";
-        private const string TplCellActions = "tpl-cell-actions";
+        private const string TplCellRowAction = "tpl-cell-row-action";
 
         // ─── USS class names ──────────────────────────────────────────────────
 
@@ -88,7 +90,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string ColType    = "type";
         private const string ColValue   = "value";
         private const string ColEdit    = "edit";
-        private const string ColActions = "actions";
+        private const string ColRowAction = "row-action";
 
         // ─── Column titles ────────────────────────────────────────────────────
 
@@ -321,6 +323,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             _restoreSelectedButton.clicked += RestoreSelectedItems;
             _moveSelectedButton.clicked += ShowMoveSelectedMenu;
             _deleteSelectedButton.clicked += DeleteSelectedItems;
+            rootVisualElement.Q<ToolbarButton>(NameBtnDeleteFiltered).clicked += DeleteSelectedItems;
             rootVisualElement.Q<ToolbarButton>(NameBtnDeleteAll).clicked += MarkAllForDelete;
             rootVisualElement.Q<ToolbarButton>(NameBtnSave).clicked      += SaveAll;
             rootVisualElement.Q<ToolbarButton>(NameBtnRefresh).clicked   += RefreshPlayerPrefs;
@@ -916,18 +919,13 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             {
                 var header = new VisualElement();
                 header.AddToClassList("ppe-select-header");
-                header.RegisterCallback<PointerDownEvent>(evt =>
-                {
-                    if (evt.button != 0) return;
-                    SelectAllDisplayedRows();
-                    evt.StopPropagation();
-                });
                 return header;
             };
             selectCol.makeCell = () =>
             {
                 var cell = CloneCellTemplate(TplCellSelect);
                 DisableFocusRecursive(cell);
+                RegisterRowContextMenu(cell);
                 return cell;
             };
             selectCol.bindCell = (element, index) =>
@@ -950,6 +948,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var cell = CloneCellTemplate(TplCellFavorite);
                 var btn = cell.Q<Button>(NameFavBtn);
                 DisableFocusRecursive(cell);
+                RegisterRowContextMenu(cell);
                 btn.clicked += () =>
                 {
                     if (btn.userData is not PlayerPrefStore pref) return;
@@ -966,6 +965,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 btn.text = isFavorite ? BtnTextFavorite : BtnTextNotFavorite;
                 btn.tooltip = isFavorite ? TooltipFavorite : TooltipNotFavorite;
                 btn.SetEnabled(!pref.isMarkedForDelete);
+                element.userData = pref;
                 ApplyRowStyle(element, pref, index);
             };
             favoriteCol.unbindCell = (element, _) =>
@@ -985,6 +985,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             {
                 var cell = CloneCellTemplate(TplCellKey);
                 var tf   = cell.Q<TextField>(NameKeyField);
+                RegisterRowContextMenu(cell);
                 tf.RegisterValueChangedCallback(evt =>
                 {
                     if (tf.userData is not PlayerPrefStore pref || !pref.isNew) return;
@@ -1004,6 +1005,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var dupIcon = element.Q<Label>(NameDupIcon);
 
                 tf.userData = pref;
+                element.userData = pref;
                 tf.SetValueWithoutNotify(pref.name);
                 tf.isReadOnly = !pref.isNew;
                 tf.SetEnabled(!pref.isMarkedForDelete);
@@ -1034,6 +1036,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             {
                 var cell = CloneCellTemplate(TplCellType);
                 var drop = cell.Q<DropdownField>(NameTypeField);
+                RegisterRowContextMenu(cell);
                 drop.choices = new List<string>(PrefValue.AllTypeDisplayNames);
                 drop.RegisterValueChangedCallback(evt =>
                 {
@@ -1053,6 +1056,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var pref = _displayedPrefs[index];
                 var drop = element.Q<DropdownField>(NameTypeField);
                 drop.userData = pref;
+                element.userData = pref;
                 drop.SetValueWithoutNotify(pref.value.TypeDisplayName);
                 drop.SetEnabled(!pref.isMarkedForDelete);
                 ApplyRowStyle(element, pref, index);
@@ -1076,6 +1080,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var cell    = CloneCellTemplate(TplCellValue);
                 var tf      = cell.Q<TextField>(NameValueField);
                 var errIcon = cell.Q<Label>(NameErrIcon);
+                RegisterRowContextMenu(cell);
                 tf.RegisterValueChangedCallback(evt =>
                 {
                     if (tf.userData is not PlayerPrefStore pref) return;
@@ -1096,6 +1101,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var tf      = element.Q<TextField>(NameValueField);
                 var errIcon = element.Q<Label>(NameErrIcon);
                 tf.userData = pref;
+                element.userData = pref;
                 tf.SetValueWithoutNotify(pref.StringValue);
                 tf.SetEnabled(!pref.isMarkedForDelete);
                 tf.RemoveFromClassList(ClassFieldInvalid);
@@ -1121,6 +1127,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var cell = CloneCellTemplate(TplCellEdit);
                 var btn = cell.Q<Button>(NameEditBtn);
                 DisableFocusRecursive(cell);
+                RegisterRowContextMenu(cell);
                 btn.clicked += () =>
                 {
                     if (btn.userData is not PlayerPrefStore pref) return;
@@ -1136,6 +1143,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 btn.text = BtnTextEdit;
                 btn.tooltip = TooltipEditValue;
                 btn.SetEnabled(!pref.isMarkedForDelete);
+                element.userData = pref;
                 ApplyRowStyle(element, pref, index);
             };
             editCol.unbindCell = (element, _) =>
@@ -1145,19 +1153,20 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             };
             columns.Add(editCol);
 
-            // ── Actions ───────────────────────────────────────────────────────
-            var actCol = new Column
+            // ── Row Action ────────────────────────────────────────────────────
+            var rowActionCol = new Column
             {
-                name = ColActions, title = "",
-                width = 80, minWidth = 80, maxWidth = 80,
+                name = ColRowAction, title = "",
+                width = 28, minWidth = 28, maxWidth = 28,
                 sortable = false, resizable = false,
             };
-            actCol.makeCell = () =>
+            rowActionCol.makeCell = () =>
             {
-                var cell = CloneCellTemplate(TplCellActions);
+                var cell = CloneCellTemplate(TplCellRowAction);
                 var restoreBtn = cell.Q<Button>(NameRestoreBtn);
-                var delBtn    = cell.Q<Button>(NameDelBtn);
+                var delBtn = cell.Q<Button>(NameDelBtn);
                 DisableFocusRecursive(cell);
+                RegisterRowContextMenu(cell);
                 restoreBtn.clicked += () =>
                 {
                     if (restoreBtn.userData is not PlayerPrefStore pref) return;
@@ -1170,11 +1179,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 };
                 return cell;
             };
-            actCol.bindCell = (element, index) =>
+            rowActionCol.bindCell = (element, index) =>
             {
                 var pref = _displayedPrefs[index];
                 var restoreBtn = element.Q<Button>(NameRestoreBtn);
-                var delBtn    = element.Q<Button>(NameDelBtn);
+                var delBtn = element.Q<Button>(NameDelBtn);
                 bool canRestoreValue = CanRestoreValue(pref);
 
                 restoreBtn.userData = pref;
@@ -1184,18 +1193,23 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 restoreBtn.SetEnabled(canRestoreValue);
 
                 delBtn.userData = pref;
-                delBtn.text    = pref.isMarkedForDelete ? BtnTextRestore : BtnTextDelete;
-                delBtn.tooltip = pref.isMarkedForDelete ? TooltipRestore  : TooltipDelete;
+                delBtn.text = BtnTextDelete;
+                delBtn.tooltip = TooltipDelete;
+                delBtn.EnableInClassList(ClassHidden, canRestoreValue);
+                delBtn.SetEnabled(!pref.isMarkedForDelete);
+
+                element.userData = pref;
                 ApplyRowStyle(element, pref, index);
             };
-            actCol.unbindCell = (element, _) =>
+            rowActionCol.unbindCell = (element, _) =>
             {
+                element.userData = null;
                 var restoreBtn = element.Q<Button>(NameRestoreBtn);
-                var delBtn    = element.Q<Button>(NameDelBtn);
+                var delBtn = element.Q<Button>(NameDelBtn);
                 if (restoreBtn != null) restoreBtn.userData = null;
-                if (delBtn    != null) delBtn.userData    = null;
+                if (delBtn != null) delBtn.userData = null;
             };
-            columns.Add(actCol);
+            columns.Add(rowActionCol);
 
             // ── MultiColumnListView ───────────────────────────────────────────
             _listView = new MultiColumnListView(columns)
@@ -1211,10 +1225,44 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             _listView.AddToClassList(NameList); // .ppe-list { flex-grow: 1 } in USS
             _listView.columnSortingChanged += OnColumnSortingChanged;
             _listView.selectionChanged += OnListSelectionChanged;
+            LockColumnConfiguration(columns);
+            _listView.schedule.Execute(LockColumnReordering).StartingIn(100);
 
             (rootVisualElement.Q(NameListContainer) ?? rootVisualElement).Add(_listView);
 
             SetupFilterSync();
+        }
+
+        private static void LockColumnConfiguration(Columns columns)
+        {
+            foreach (var column in columns)
+            {
+                column.optional = false;
+            }
+        }
+
+        private void LockColumnReordering()
+        {
+            var header = _listView?.Q(className: ClassMultiColumnHeader);
+            if (header == null)
+                return;
+
+            TrySetBoolProperty(header, "reorderable", false);
+            TrySetBoolProperty(header, "canReorder", false);
+            foreach (var element in header.Query<VisualElement>().ToList())
+            {
+                TrySetBoolProperty(element, "reorderable", false);
+                TrySetBoolProperty(element, "canReorder", false);
+            }
+        }
+
+        private static void TrySetBoolProperty(object target, string name, bool value)
+        {
+            var prop = target.GetType().GetProperty(
+                name,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (prop?.PropertyType == typeof(bool) && prop.CanWrite)
+                prop.SetValue(target, value);
         }
 
         private void OnListSelectionChanged(IEnumerable<object> selectedItems)
@@ -1229,10 +1277,55 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             UpdateSelectedControls();
         }
 
+        private void RegisterRowContextMenu(VisualElement cell)
+        {
+            cell.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                if (evt.button != 1) return;
+                if (cell.userData is not PlayerPrefStore pref) return;
+                ShowRowContextMenu(pref);
+                evt.StopPropagation();
+            }, TrickleDown.TrickleDown);
+        }
+
+        private void ShowRowContextMenu(PlayerPrefStore pref)
+        {
+            var menu = new GenericMenu();
+            menu.AddItem(new GUIContent(pref.isMarkedForDelete ? TooltipRestore : TooltipDelete),
+                false, () => ToggleDelete(pref));
+
+            if (CanRestoreValue(pref))
+                menu.AddItem(new GUIContent(TooltipRestoreValue), false, () => RestoreValue(pref));
+            else
+                menu.AddDisabledItem(new GUIContent(TooltipRestoreValue));
+
+            menu.AddSeparator("");
+            foreach (string group in GetAllGroups())
+            {
+                string targetGroup = group;
+                bool isCurrent = string.Equals(GetGroup(pref), targetGroup, StringComparison.OrdinalIgnoreCase);
+                menu.AddItem(new GUIContent("Move To/" + targetGroup), isCurrent,
+                    () => MovePrefsToGroup(new[] { pref }, targetGroup));
+            }
+
+            menu.ShowAsContext();
+        }
+
         private void SelectAllDisplayedRows()
         {
             if (_listView == null || _displayedPrefs.Count == 0)
                 return;
+
+            bool allSelected = _displayedPrefs.All(p => _selectedPrefs.Contains(p));
+            if (allSelected)
+            {
+                _selectedPrefs.Clear();
+                _syncingListSelection = true;
+                _listView.ClearSelection();
+                _syncingListSelection = false;
+                UpdateSelectedControls();
+                return;
+            }
 
             _selectedPrefs.Clear();
             foreach (var pref in _displayedPrefs)
@@ -1312,8 +1405,16 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             // so Q(ColKey) reliably finds the Key column's header cell.
             var keyColHeader  = header.Q(ColKey);
             var typeColHeader = header.Q(ColType);
+            var selectColHeader = header.Q(ColSelect);
 
             if (keyColHeader == null) return;
+
+            selectColHeader?.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                if (evt.button != 0) return;
+                SelectAllDisplayedRows();
+                evt.StopPropagation();
+            }, TrickleDown.TrickleDown);
 
             // Initial sync (layout may already be resolved at this point).
             SyncFilterWidths(keyColHeader, typeColHeader);
@@ -1527,7 +1628,6 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         {
             foreach (var p in _prefs)
             {
-                if (!IsInCurrentTab(p)) continue;
                 p.isMarkedForDelete = true;
                 _selectedPrefs.Remove(p);
             }
@@ -1597,10 +1697,15 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void MoveSelectedItemsToGroup(string targetGroup)
         {
+            MovePrefsToGroup(_selectedPrefs.Where(p => p != null).ToList(), targetGroup);
+        }
+
+        private void MovePrefsToGroup(IEnumerable<PlayerPrefStore> prefs, string targetGroup)
+        {
             if (!IsKnownGroup(targetGroup))
                 targetGroup = GroupMain;
 
-            var selected = _selectedPrefs
+            var selected = prefs
                 .Where(p => p != null)
                 .ToList();
 
@@ -1945,6 +2050,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 rootVisualElement.style.paddingRight = 8;
                 rootVisualElement.style.paddingTop = 8;
                 rootVisualElement.style.paddingBottom = 8;
+                rootVisualElement.style.flexDirection = FlexDirection.Column;
 
                 var scroll = new ScrollView();
                 foreach (string group in groups)
@@ -2002,6 +2108,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
             private void Build(string key, string value, string typeName)
             {
+                var ss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StyleSheetPath);
+                if (ss != null)
+                    rootVisualElement.styleSheets.Add(ss);
+
                 rootVisualElement.style.paddingLeft = 8;
                 rootVisualElement.style.paddingRight = 8;
                 rootVisualElement.style.paddingTop = 8;
@@ -2016,12 +2126,15 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                     multiline = true,
                     value = value,
                 };
+                _valueField.AddToClassList("ppe-value-editor-field");
                 _valueField.style.flexGrow = 1;
+                _valueField.style.flexShrink = 1;
+                _valueField.style.alignSelf = Align.Stretch;
                 _valueField.style.whiteSpace = WhiteSpace.Normal;
 
                 var buttons = new VisualElement();
                 buttons.style.flexDirection = FlexDirection.Row;
-                buttons.style.justifyContent = Justify.FlexEnd;
+                buttons.style.justifyContent = Justify.FlexStart;
                 buttons.style.marginTop = 8;
 
                 var cancel = new Button(Close) { text = DialogBtnCancel };
@@ -2035,8 +2148,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                     text = DialogBtnOk,
                 };
 
-                buttons.Add(cancel);
                 buttons.Add(ok);
+                buttons.Add(cancel);
                 rootVisualElement.Add(title);
                 rootVisualElement.Add(_valueField);
                 rootVisualElement.Add(buttons);

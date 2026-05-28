@@ -18,6 +18,16 @@
     padding: 0 8px;
 }
 
+.ppe-danger-btn {
+    color: rgb(220, 70, 70);
+    -unity-font-style: bold;
+}
+
+.ppe-danger-btn:hover {
+    background-color: rgba(200, 50, 50, 0.25);
+    border-color: rgba(200, 50, 50, 0.55);
+}
+
 .ppe-selected-count {
     min-width: 82px;
     padding: 0 8px;
@@ -102,7 +112,7 @@
 .ppe-filter-col-type    { width: 80px;  flex-shrink: 0; }
 .ppe-filter-col-value   { flex-grow: 1; min-width: 60px; }
 .ppe-filter-col-edit    { width: 28px;  flex-shrink: 0; }
-.ppe-filter-col-actions { width: 80px;  flex-shrink: 0; }
+.ppe-filter-col-action  { width: 28px;  flex-shrink: 0; }
 
 .ppe-filter-field {
     flex-grow: 1;
@@ -301,7 +311,7 @@
 .ppe-cell--select,
 .ppe-cell--favorite,
 .ppe-cell--edit,
-.ppe-cell--actions {
+.ppe-cell--action {
     justify-content: center;
     align-items: center;
     padding: 1px 3px;
@@ -329,7 +339,7 @@
 }
 
 .ppe-restore-btn {
-    margin-right: 2px;
+    margin-right: 0;
 }
 
 .ppe-delete-btn:hover {
@@ -359,6 +369,25 @@
 }
 .ppe-row--deleted .ppe-delete-btn:hover {
     background-color: rgba(40, 160, 40, 0.40);
+}
+
+.ppe-value-editor-field {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    align-self: stretch;
+}
+
+.ppe-value-editor-field > .unity-base-field__label {
+    display: none;
+}
+
+.ppe-value-editor-field .unity-base-text-field__input,
+.ppe-value-editor-field .unity-text-field__input {
+    flex-grow: 1;
+    min-height: 0;
+    height: 100%;
+    white-space: normal;
 }
 
 /* ─── Column header sort indicator (handled by Unity) ─────── */

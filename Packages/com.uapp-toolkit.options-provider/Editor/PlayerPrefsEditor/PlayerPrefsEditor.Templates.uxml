@@ -36,8 +36,8 @@
         <ui:Button name="edit-btn" class="ppe-icon-btn ppe-edit-btn" />
     </ui:VisualElement>
 
-    <!-- ── Actions column cell ───────────────────────────────────────────── -->
-    <ui:VisualElement name="tpl-cell-actions" class="ppe-cell ppe-cell--actions">
+    <!-- ── Row action column cell ────────────────────────────────────────── -->
+    <ui:VisualElement name="tpl-cell-row-action" class="ppe-cell ppe-cell--action">
         <ui:Button name="restore-btn" class="ppe-icon-btn ppe-restore-btn ppe-hidden" />
         <ui:Button name="del-btn" class="ppe-delete-btn" />
     </ui:VisualElement>

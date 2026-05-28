@@ -9,7 +9,8 @@
         <uie:ToolbarButton name="btn-move-selected" class="ppe-toolbar-btn" text="Move To Group" />
         <uie:ToolbarButton name="btn-delete-selected" class="ppe-toolbar-btn" text="✕ Delete Selected" />
         <uie:ToolbarSpacer class="ppe-toolbar-spacer" />
-        <uie:ToolbarButton name="btn-delete-all" class="ppe-toolbar-btn" text="✕ Delete All" />
+        <uie:ToolbarButton name="btn-delete-filtered" class="ppe-toolbar-btn" text="✕ Delete Selected" />
+        <uie:ToolbarButton name="btn-delete-all" class="ppe-toolbar-btn ppe-danger-btn" text="✕ Delete All" />
         <uie:ToolbarButton name="btn-save"       class="ppe-toolbar-btn" text="💾 Save" />
         <uie:ToolbarButton name="btn-refresh"    class="ppe-toolbar-btn" text="↺ Refresh" />
         <uie:ToolbarButton name="btn-export"     class="ppe-toolbar-btn" text="⬆ Export JSON" />
@@ -33,7 +34,7 @@
     <!-- ── Per-column filter row ─────────────────────────────────────────── -->
     <!--
         Initial widths mirror the MultiColumnListView default column widths:
-          Select (28 px) | Star (28 px) | Key (200 px) | Type (80 px) | Value (flex) | Edit (28 px) | Actions (80 px)
+          Select (28 px) | Star (28 px) | Key (200 px) | Type (80 px) | Value (flex) | Edit (28 px) | Action (28 px)
         After the list view is rendered, C# syncs these widths to the actual
         column widths so resizing a column also resizes the filter field.
     -->
@@ -57,7 +58,7 @@
                           placeholder-text="🔍 Value…" />
         </ui:VisualElement>
         <ui:VisualElement class="ppe-filter-col-edit" />
-        <ui:VisualElement class="ppe-filter-col-actions" />
+        <ui:VisualElement class="ppe-filter-col-action" />
     </ui:VisualElement>
 
     <!-- ── List view placeholder (MultiColumnListView injected from C#) ─── -->
