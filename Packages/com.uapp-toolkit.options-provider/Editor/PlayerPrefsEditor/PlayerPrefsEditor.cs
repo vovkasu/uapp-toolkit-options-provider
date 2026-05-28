@@ -34,7 +34,6 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string NameList          = "ppe-list";
         private const string NameTabsToolbar   = "tabs-toolbar";
         private const string NameTabKeys       = "tab-keys";
-        private const string NameNewGroupName  = "new-group-name";
         private const string NameEditBtn       = "edit-btn";
         private const string NameFavBtn        = "fav-btn";
         private const string NameRestoreBtn    = "restore-btn";
@@ -51,7 +50,6 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string NameBtnRestoreSelected = "btn-restore-selected";
         private const string NameBtnDeleteSelected = "btn-delete-selected";
         private const string NameBtnDeleteAll = "btn-delete-all";
-        private const string NameBtnDeleteFiltered = "btn-delete-filtered";
         private const string NameBtnSave      = "btn-save";
         private const string NameBtnRefresh   = "btn-refresh";
         private const string NameBtnExport    = "btn-export";
@@ -130,10 +128,15 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string TabTextKeys = "Main";
         private const string DialogTitleInvalidGroup = "Invalid Group";
         private const string DialogTitleDeleteGroup = "Delete Group";
+        private const string DialogTitleNewGroup = "New Group";
         private const string MsgGroupNameRequired = "Enter a group name.";
         private const string MsgGroupNameReserved = "This group already exists.";
         private const string MsgDeleteGroupFmt = "Delete group \"{0}\"?\n\nAll keys in it will be moved to Main.";
         private const string DialogTitleEditValue = "Edit PlayerPref Value";
+        private const string DialogTitleDeleteAll = "Delete All PlayerPrefs";
+        private const string MsgDeleteAll =
+            "Delete all PlayerPrefs and all PlayerPrefs editor groups now?\n\nThis cannot be undone.";
+        private const string DialogBtnDelete = "Delete";
 
         // ─── New-entry defaults ───────────────────────────────────────────────
 
@@ -208,6 +211,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             new HashSet<PlayerPrefStore>();
         private string _currentGroup = GroupMain;
         private bool _syncingListSelection;
+        private PlayerPrefStore _dragStartPref;
+        private Vector2 _dragStartPosition;
+        private bool _draggingRows;
+        private const string DragPrefsGenericDataKey = "UAppToolKit.PlayerPrefsEditor.DragPrefs";
 
         // ─── Per-column filter state ──────────────────────────────────────────
 
@@ -233,7 +240,6 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private ToolbarButton       _restoreSelectedButton;
         private ToolbarButton       _moveSelectedButton;
         private ToolbarButton       _addGroupButton;
-        private TextField           _newGroupNameField;
         private Toolbar             _tabsToolbar;
         private ToolbarToggle       _tabKeys;
         private TextField           _filterKeyField;
@@ -315,7 +321,6 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             _restoreSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnRestoreSelected);
             _moveSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnMoveSelected);
             _addGroupButton = rootVisualElement.Q<ToolbarButton>(NameBtnAddGroup);
-            _newGroupNameField = rootVisualElement.Q<TextField>(NameNewGroupName);
             _tabsToolbar = rootVisualElement.Q<Toolbar>(NameTabsToolbar);
             _tabKeys              = rootVisualElement.Q<ToolbarToggle>(NameTabKeys);
 
@@ -323,14 +328,12 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             _restoreSelectedButton.clicked += RestoreSelectedItems;
             _moveSelectedButton.clicked += ShowMoveSelectedMenu;
             _deleteSelectedButton.clicked += DeleteSelectedItems;
-            rootVisualElement.Q<ToolbarButton>(NameBtnDeleteFiltered).clicked += DeleteSelectedItems;
-            rootVisualElement.Q<ToolbarButton>(NameBtnDeleteAll).clicked += MarkAllForDelete;
+            rootVisualElement.Q<ToolbarButton>(NameBtnDeleteAll).clicked += DeleteAllPrefsImmediately;
             rootVisualElement.Q<ToolbarButton>(NameBtnSave).clicked      += SaveAll;
             rootVisualElement.Q<ToolbarButton>(NameBtnRefresh).clicked   += RefreshPlayerPrefs;
             rootVisualElement.Q<ToolbarButton>(NameBtnExport).clicked    += ExportToJson;
             rootVisualElement.Q<ToolbarButton>(NameBtnImport).clicked    += ImportFromJson;
             _addGroupButton.clicked += BeginAddCustomGroup;
-            _newGroupNameField.RegisterCallback<KeyDownEvent>(OnNewGroupNameKeyDown);
 
             _tabKeys.RegisterValueChangedCallback(evt =>
             {
@@ -339,6 +342,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 else if (IsMainGroup(_currentGroup))
                     _tabKeys.SetValueWithoutNotify(true);
             });
+            RegisterGroupDropTarget(_tabKeys, GroupMain);
 
             _filterKeyField = rootVisualElement.Q<TextField>(NameFilterKey);
             _filterKeyField.RegisterValueChangedCallback(
@@ -650,9 +654,9 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             foreach (var tab in oldCustomTabs)
                 tab.RemoveFromHierarchy();
 
-            var spacer = _tabsToolbar.Children()
-                .FirstOrDefault(e => e.ClassListContains("ppe-toolbar-spacer"));
-            int insertIndex = spacer == null ? _tabsToolbar.childCount : _tabsToolbar.IndexOf(spacer);
+            int insertIndex = _addGroupButton == null
+                ? _tabsToolbar.childCount
+                : _tabsToolbar.IndexOf(_addGroupButton);
 
             foreach (string group in _customGroups.OrderBy(g => g, StringComparer.OrdinalIgnoreCase))
             {
@@ -674,6 +678,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                         toggle.SetValueWithoutNotify(true);
                 });
                 tab.Add(toggle);
+                RegisterGroupDropTarget(tab, group);
 
                 var close = new Button(() => DeleteGroup(group))
                 {
@@ -707,6 +712,30 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private string GetGroupTabText(string group) =>
             $"{group} ({_prefs.Count(p => string.Equals(GetGroup(p), group, StringComparison.OrdinalIgnoreCase))})";
+
+        private void RegisterGroupDropTarget(VisualElement target, string group)
+        {
+            target.RegisterCallback<DragUpdatedEvent>(evt =>
+            {
+                if (DragAndDrop.GetGenericData(DragPrefsGenericDataKey) is not List<PlayerPrefStore>)
+                    return;
+
+                DragAndDrop.visualMode = DragAndDropVisualMode.Move;
+                evt.StopPropagation();
+            });
+
+            target.RegisterCallback<DragPerformEvent>(evt =>
+            {
+                if (DragAndDrop.GetGenericData(DragPrefsGenericDataKey) is not List<PlayerPrefStore> prefs)
+                    return;
+
+                DragAndDrop.AcceptDrag();
+                MovePrefsToGroup(prefs, group);
+                DragAndDrop.SetGenericData(DragPrefsGenericDataKey, null);
+                _draggingRows = false;
+                evt.StopPropagation();
+            });
+        }
 
         private void UpdateSelectedControls()
         {
@@ -1184,18 +1213,18 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var pref = _displayedPrefs[index];
                 var restoreBtn = element.Q<Button>(NameRestoreBtn);
                 var delBtn = element.Q<Button>(NameDelBtn);
-                bool canRestoreValue = CanRestoreValue(pref);
+                bool showRestore = pref.isMarkedForDelete || CanRestoreValue(pref);
 
                 restoreBtn.userData = pref;
                 restoreBtn.text = BtnTextRestore;
-                restoreBtn.tooltip = TooltipRestoreValue;
-                restoreBtn.EnableInClassList(ClassHidden, !canRestoreValue);
-                restoreBtn.SetEnabled(canRestoreValue);
+                restoreBtn.tooltip = pref.isMarkedForDelete ? TooltipRestore : TooltipRestoreValue;
+                restoreBtn.EnableInClassList(ClassHidden, !showRestore);
+                restoreBtn.SetEnabled(showRestore);
 
                 delBtn.userData = pref;
                 delBtn.text = BtnTextDelete;
                 delBtn.tooltip = TooltipDelete;
-                delBtn.EnableInClassList(ClassHidden, canRestoreValue);
+                delBtn.EnableInClassList(ClassHidden, showRestore);
                 delBtn.SetEnabled(!pref.isMarkedForDelete);
 
                 element.userData = pref;
@@ -1243,6 +1272,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void LockColumnReordering()
         {
+            TrySetBoolProperty(_listView, "reorderable", false);
+            TrySetBoolProperty(_listView, "canReorder", false);
+            TrySetBoolProperty(_listView.columns, "reorderable", false);
+            TrySetBoolProperty(_listView.columns, "canReorder", false);
+
             var header = _listView?.Q(className: ClassMultiColumnHeader);
             if (header == null)
                 return;
@@ -1254,6 +1288,12 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 TrySetBoolProperty(element, "reorderable", false);
                 TrySetBoolProperty(element, "canReorder", false);
             }
+
+            header.RegisterCallback<DragUpdatedEvent>(evt =>
+            {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                evt.StopPropagation();
+            }, TrickleDown.TrickleDown);
         }
 
         private static void TrySetBoolProperty(object target, string name, bool value)
@@ -1279,6 +1319,44 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void RegisterRowContextMenu(VisualElement cell)
         {
+            cell.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                if (evt.button != 0) return;
+                if (cell.userData is not PlayerPrefStore pref) return;
+                _dragStartPref = pref;
+                _dragStartPosition = evt.position;
+                _draggingRows = false;
+            }, TrickleDown.TrickleDown);
+
+            cell.RegisterCallback<PointerMoveEvent>(evt =>
+            {
+                if (_draggingRows || _dragStartPref == null || (evt.pressedButtons & 1) == 0)
+                    return;
+
+                if (((Vector2)evt.position - _dragStartPosition).sqrMagnitude < 25f)
+                    return;
+
+                var prefs = _selectedPrefs.Contains(_dragStartPref)
+                    ? _selectedPrefs.Where(p => p != null).ToList()
+                    : new List<PlayerPrefStore> { _dragStartPref };
+                if (prefs.Count == 0)
+                    return;
+
+                DragAndDrop.PrepareStartDrag();
+                DragAndDrop.SetGenericData(DragPrefsGenericDataKey, prefs);
+                DragAndDrop.StartDrag(prefs.Count == 1
+                    ? prefs[0].name
+                    : $"{prefs.Count} PlayerPrefs");
+                _draggingRows = true;
+                evt.StopPropagation();
+            }, TrickleDown.TrickleDown);
+
+            cell.RegisterCallback<PointerUpEvent>(_ =>
+            {
+                _dragStartPref = null;
+                _draggingRows = false;
+            });
+
             cell.RegisterCallback<PointerDownEvent>(evt =>
             {
                 if (evt.button != 1) return;
@@ -1541,62 +1619,29 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void BeginAddCustomGroup()
         {
-            if (_newGroupNameField == null)
-                return;
-
-            if (_newGroupNameField.ClassListContains(ClassHidden))
-            {
-                _newGroupNameField.RemoveFromClassList(ClassHidden);
-                _newGroupNameField.Focus();
-                return;
-            }
-
-            AddCustomGroup();
+            NewGroupWindow.ShowWindow(AddCustomGroup);
         }
 
-        private void OnNewGroupNameKeyDown(KeyDownEvent evt)
+        private bool AddCustomGroup(string group)
         {
-            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
-            {
-                AddCustomGroup();
-                evt.StopPropagation();
-            }
-            else if (evt.keyCode == KeyCode.Escape)
-            {
-                HideNewGroupField();
-                evt.StopPropagation();
-            }
-        }
-
-        private void HideNewGroupField()
-        {
-            if (_newGroupNameField == null)
-                return;
-
-            _newGroupNameField.SetValueWithoutNotify("");
-            _newGroupNameField.AddToClassList(ClassHidden);
-        }
-
-        private void AddCustomGroup()
-        {
-            string group = (_newGroupNameField?.value ?? "").Trim();
+            group = (group ?? "").Trim();
             if (string.IsNullOrEmpty(group))
             {
                 EditorUtility.DisplayDialog(DialogTitleInvalidGroup, MsgGroupNameRequired, DialogBtnOk);
-                return;
+                return false;
             }
 
             if (IsKnownGroup(group))
             {
                 EditorUtility.DisplayDialog(DialogTitleInvalidGroup, MsgGroupNameReserved, DialogBtnOk);
-                return;
+                return false;
             }
 
             _customGroups.Add(group);
-            HideNewGroupField();
             SavePersistentKeySets();
             RebuildGroupControls();
             SetCurrentGroup(group);
+            return true;
         }
 
         private void DeleteGroup(string group)
@@ -1624,16 +1669,28 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             ApplyFilter();
         }
 
-        private void MarkAllForDelete()
+        private void DeleteAllPrefsImmediately()
         {
-            foreach (var p in _prefs)
-            {
-                p.isMarkedForDelete = true;
-                _selectedPrefs.Remove(p);
-            }
+            bool confirmed = EditorUtility.DisplayDialog(
+                DialogTitleDeleteAll,
+                MsgDeleteAll,
+                DialogBtnDelete,
+                DialogBtnCancel);
+            if (!confirmed) return;
+
+            PlayerPrefs.DeleteAll();
+            PlayerPrefs.Save();
+            _prefs.Clear();
+            _displayedPrefs.Clear();
+            _selectedPrefs.Clear();
+            _favoriteKeys.Clear();
+            _customGroups.Clear();
+            _keyGroups.Clear();
+            _currentGroup = GroupMain;
+            SavePersistentKeySets();
+            RebuildGroupControls();
             ValidateDuplicates();
-            _listView.RefreshItems();
-            UpdateStatus();
+            ApplyFilter();
         }
 
         private void ToggleFavorite(PlayerPrefStore pref)
@@ -1650,6 +1707,18 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void RestoreValue(PlayerPrefStore pref)
         {
+            if (pref == null || pref.isNew)
+                return;
+
+            if (pref.isMarkedForDelete)
+            {
+                pref.isMarkedForDelete = false;
+                ValidateDuplicates();
+                _listView.RefreshItems();
+                UpdateStatus();
+                return;
+            }
+
             if (!CanRestoreValue(pref))
                 return;
 
@@ -2039,7 +2108,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 var window = CreateInstance<ExportGroupsWindow>();
                 window.titleContent = new GUIContent(DialogTitleExportGroups);
                 window._onExport = onExport;
-                window.minSize = new Vector2(260, 180);
+                int visibleRows = Mathf.Min(10, Mathf.Max(1, groups.Count));
+                var size = new Vector2(280, 64 + visibleRows * 22);
+                window.minSize = size;
+                window.maxSize = size;
+                window.position = new Rect(200, 200, size.x, size.y);
                 window.Build(groups);
                 window.ShowUtility();
             }
@@ -2053,6 +2126,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 rootVisualElement.style.flexDirection = FlexDirection.Column;
 
                 var scroll = new ScrollView();
+                scroll.style.flexGrow = 1;
+                scroll.verticalScrollerVisibility = groups.Count > 10
+                    ? ScrollerVisibility.AlwaysVisible
+                    : ScrollerVisibility.Hidden;
                 foreach (string group in groups)
                 {
                     var toggle = new Toggle(group) { value = true };
@@ -2062,7 +2139,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
                 var buttons = new VisualElement();
                 buttons.style.flexDirection = FlexDirection.Row;
-                buttons.style.justifyContent = Justify.FlexEnd;
+                buttons.style.justifyContent = Justify.FlexStart;
                 buttons.style.marginTop = 8;
 
                 var cancel = new Button(Close) { text = DialogBtnCancel };
@@ -2079,10 +2156,70 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                     text = DialogBtnOk,
                 };
 
-                buttons.Add(cancel);
                 buttons.Add(export);
+                buttons.Add(cancel);
                 rootVisualElement.Add(scroll);
                 rootVisualElement.Add(buttons);
+            }
+        }
+
+        private sealed class NewGroupWindow : EditorWindow
+        {
+            private Func<string, bool> _onOk;
+            private TextField _nameField;
+
+            public static void ShowWindow(Func<string, bool> onOk)
+            {
+                var window = CreateInstance<NewGroupWindow>();
+                window.titleContent = new GUIContent(DialogTitleNewGroup);
+                window._onOk = onOk;
+                var size = new Vector2(280, 82);
+                window.minSize = size;
+                window.maxSize = size;
+                window.position = new Rect(240, 240, size.x, size.y);
+                window.Build();
+                window.ShowUtility();
+            }
+
+            private void Build()
+            {
+                rootVisualElement.style.paddingLeft = 8;
+                rootVisualElement.style.paddingRight = 8;
+                rootVisualElement.style.paddingTop = 8;
+                rootVisualElement.style.paddingBottom = 8;
+
+                _nameField = new TextField { label = "Name" };
+                _nameField.RegisterCallback<KeyDownEvent>(evt =>
+                {
+                    if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+                    {
+                        Submit();
+                        evt.StopPropagation();
+                    }
+                    else if (evt.keyCode == KeyCode.Escape)
+                    {
+                        Close();
+                        evt.StopPropagation();
+                    }
+                });
+
+                var buttons = new VisualElement();
+                buttons.style.flexDirection = FlexDirection.Row;
+                buttons.style.justifyContent = Justify.FlexStart;
+                buttons.style.marginTop = 8;
+
+                buttons.Add(new Button(Submit) { text = DialogBtnOk });
+                buttons.Add(new Button(Close) { text = DialogBtnCancel });
+
+                rootVisualElement.Add(_nameField);
+                rootVisualElement.Add(buttons);
+                _nameField.schedule.Execute(() => _nameField.Focus());
+            }
+
+            private void Submit()
+            {
+                if (_onOk?.Invoke(_nameField.value) != false)
+                    Close();
             }
         }
 

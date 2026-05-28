@@ -9,7 +9,6 @@
         <uie:ToolbarButton name="btn-move-selected" class="ppe-toolbar-btn" text="Move To Group" />
         <uie:ToolbarButton name="btn-delete-selected" class="ppe-toolbar-btn" text="✕ Delete Selected" />
         <uie:ToolbarSpacer class="ppe-toolbar-spacer" />
-        <uie:ToolbarButton name="btn-delete-filtered" class="ppe-toolbar-btn" text="✕ Delete Selected" />
         <uie:ToolbarButton name="btn-delete-all" class="ppe-toolbar-btn ppe-danger-btn" text="✕ Delete All" />
         <uie:ToolbarButton name="btn-save"       class="ppe-toolbar-btn" text="💾 Save" />
         <uie:ToolbarButton name="btn-refresh"    class="ppe-toolbar-btn" text="↺ Refresh" />
@@ -20,9 +19,8 @@
     <!-- ── Tabs ──────────────────────────────────────────────────────────── -->
     <uie:Toolbar name="tabs-toolbar" class="ppe-tabs">
         <uie:ToolbarToggle name="tab-keys"    class="ppe-tab" text="Keys" value="true" />
-        <uie:ToolbarSpacer class="ppe-toolbar-spacer" />
         <uie:ToolbarButton name="btn-add-group" class="ppe-toolbar-btn" text="+ Group" />
-        <ui:TextField name="new-group-name" class="ppe-group-name-field ppe-hidden" />
+        <uie:ToolbarSpacer class="ppe-toolbar-spacer" />
     </uie:Toolbar>
 
     <!-- ── Status bar ────────────────────────────────────────────────────── -->
