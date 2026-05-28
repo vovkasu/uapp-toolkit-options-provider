@@ -20,6 +20,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             [JsonProperty("value")] public string Value { get; set; }
         }
 
+        private class PlayerPrefsGroupDto
+        {
+            [JsonProperty("groups")] public Dictionary<string, List<PlayerPrefDto>> Groups { get; set; }
+        }
+
         // ─── IPlayerPrefsSerializer ───────────────────────────────────────────
 
         public string Serialize(List<PlayerPrefStore> prefs)
@@ -34,10 +39,39 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             return JsonConvert.SerializeObject(dtos, Formatting.Indented);
         }
 
+        public string SerializeGroups(Dictionary<string, List<PlayerPrefStore>> groups)
+        {
+            var dto = new PlayerPrefsGroupDto
+            {
+                Groups = groups.ToDictionary(
+                    pair => pair.Key,
+                    pair => pair.Value.Select(p => new PlayerPrefDto
+                    {
+                        Key   = p.name,
+                        Type  = p.value.TypeId,
+                        Value = p.StringValue,
+                    }).ToList())
+            };
+
+            return JsonConvert.SerializeObject(dto, Formatting.Indented);
+        }
+
         public List<PlayerPrefStore> Deserialize(string data)
         {
-            var dtos = JsonConvert.DeserializeObject<List<PlayerPrefDto>>(data)
+            List<PlayerPrefDto> dtos;
+
+            if ((data ?? "").TrimStart().StartsWith("{"))
+            {
+                var grouped = JsonConvert.DeserializeObject<PlayerPrefsGroupDto>(data);
+                dtos = grouped?.Groups?
+                    .SelectMany(pair => pair.Value ?? new List<PlayerPrefDto>())
+                    .ToList() ?? new List<PlayerPrefDto>();
+            }
+            else
+            {
+                dtos = JsonConvert.DeserializeObject<List<PlayerPrefDto>>(data)
                        ?? new List<PlayerPrefDto>();
+            }
 
             return dtos
                 .Where(d => d.Key != null && d.Type != null && d.Value != null)

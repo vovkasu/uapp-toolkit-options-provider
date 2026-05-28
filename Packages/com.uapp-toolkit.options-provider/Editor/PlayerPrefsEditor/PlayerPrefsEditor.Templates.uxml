@@ -6,10 +6,8 @@
 -->
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
 
-    <!-- ── Selection column cell ─────────────────────────────────────────── -->
-    <ui:VisualElement name="tpl-cell-select" class="ppe-cell ppe-cell--select">
-        <ui:Toggle name="select-toggle" class="ppe-select-toggle" />
-    </ui:VisualElement>
+    <!-- ── Selection helper column cell ──────────────────────────────────── -->
+    <ui:VisualElement name="tpl-cell-select" class="ppe-cell ppe-cell--select" />
 
     <!-- ── Favorite column cell ──────────────────────────────────────────── -->
     <ui:VisualElement name="tpl-cell-favorite" class="ppe-cell ppe-cell--favorite">
@@ -33,9 +31,13 @@
         <ui:Label     name="err-icon"   text="⚠" class="ppe-error-icon ppe-hidden" />
     </ui:VisualElement>
 
+    <!-- ── Edit value column cell ────────────────────────────────────────── -->
+    <ui:VisualElement name="tpl-cell-edit" class="ppe-cell ppe-cell--edit">
+        <ui:Button name="edit-btn" class="ppe-icon-btn ppe-edit-btn" />
+    </ui:VisualElement>
+
     <!-- ── Actions column cell ───────────────────────────────────────────── -->
     <ui:VisualElement name="tpl-cell-actions" class="ppe-cell ppe-cell--actions">
-        <ui:Button name="ignore-btn" class="ppe-icon-btn ppe-ignore-btn" />
         <ui:Button name="restore-btn" class="ppe-icon-btn ppe-restore-btn ppe-hidden" />
         <ui:Button name="del-btn" class="ppe-delete-btn" />
     </ui:VisualElement>

@@ -31,12 +31,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string NameSelectedCountLabel = "selected-count-label";
         private const string NameListContainer = "list-container";
         private const string NameList          = "ppe-list";
+        private const string NameTabsToolbar   = "tabs-toolbar";
         private const string NameTabKeys       = "tab-keys";
-        private const string NameTabIgnored    = "tab-ignored";
-        private const string NameSelectToggle  = "select-toggle";
-        private const string NameSelectAllToggle = "select-all-toggle";
+        private const string NameNewGroupName  = "new-group-name";
+        private const string NameEditBtn       = "edit-btn";
         private const string NameFavBtn        = "fav-btn";
-        private const string NameIgnoreBtn     = "ignore-btn";
         private const string NameRestoreBtn    = "restore-btn";
         private const string NameKeyField      = "key-field";
         private const string NameTypeField     = "type-field";
@@ -49,21 +48,23 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private const string NameBtnAddNew    = "btn-add-new";
         private const string NameBtnRestoreSelected = "btn-restore-selected";
-        private const string NameBtnIgnoreSelected = "btn-ignore-selected";
         private const string NameBtnDeleteSelected = "btn-delete-selected";
         private const string NameBtnDeleteAll = "btn-delete-all";
         private const string NameBtnSave      = "btn-save";
         private const string NameBtnRefresh   = "btn-refresh";
         private const string NameBtnExport    = "btn-export";
         private const string NameBtnImport    = "btn-import";
+        private const string NameBtnAddGroup  = "btn-add-group";
+        private const string NameBtnMoveSelected = "btn-move-selected";
 
         // ─── Cell template names ──────────────────────────────────────────────
 
-        private const string TplCellKey     = "tpl-cell-key";
         private const string TplCellSelect  = "tpl-cell-select";
+        private const string TplCellKey     = "tpl-cell-key";
         private const string TplCellFavorite = "tpl-cell-favorite";
         private const string TplCellType    = "tpl-cell-type";
         private const string TplCellValue   = "tpl-cell-value";
+        private const string TplCellEdit    = "tpl-cell-edit";
         private const string TplCellActions = "tpl-cell-actions";
 
         // ─── USS class names ──────────────────────────────────────────────────
@@ -81,11 +82,12 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         // ─── Column names ─────────────────────────────────────────────────────
 
-        private const string ColSelect  = "select";
+        private const string ColSelect   = "select";
         private const string ColFavorite = "favorite";
         private const string ColKey     = "key";
         private const string ColType    = "type";
         private const string ColValue   = "value";
+        private const string ColEdit    = "edit";
         private const string ColActions = "actions";
 
         // ─── Column titles ────────────────────────────────────────────────────
@@ -106,26 +108,30 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string BtnTextDelete  = "✕";
         private const string BtnTextDeleteSelected = "✕ Delete Selected";
         private const string BtnTextRestoreSelected = "↩ Restore Selected";
-        private const string BtnTextIgnoreSelected = "⊘ Ignore Selected";
-        private const string BtnTextUnignoreSelected = "↩ Unignore Selected";
+        private const string BtnTextMoveSelected = "Move To Group";
+        private const string BtnTextEdit = "✎";
         private const string SelectedCountFmt = "Selected: {0}";
         private const string TooltipRestore = "Restore";
         private const string TooltipDelete  = "Delete";
         private const string TooltipRestoreValue = "Revert value";
+        private const string TooltipEditValue = "Edit value in separate window";
         private const string BtnTextFavorite = "★";
         private const string BtnTextNotFavorite = "☆";
         private const string TooltipFavorite = "Remove from favorites";
         private const string TooltipNotFavorite = "Add to favorites";
-        private const string BtnTextIgnore = "⊘";
-        private const string BtnTextUnignore = "↩";
-        private const string TooltipIgnore = "Move to ignored keys";
-        private const string TooltipUnignore = "Return to main keys";
 
         // ─── Filters / tabs ───────────────────────────────────────────────────
 
         private const string TypeFilterAll = "All";
-        private const string TabTextKeys = "Keys";
-        private const string TabTextIgnoredFmt = "Ignored ({0})";
+        private const string GroupMain = "Main";
+        private const string GroupIgnored = "Ignored";
+        private const string TabTextKeys = "Main";
+        private const string DialogTitleInvalidGroup = "Invalid Group";
+        private const string DialogTitleDeleteGroup = "Delete Group";
+        private const string MsgGroupNameRequired = "Enter a group name.";
+        private const string MsgGroupNameReserved = "This group already exists.";
+        private const string MsgDeleteGroupFmt = "Delete group \"{0}\"?\n\nAll keys in it will be moved to Main.";
+        private const string DialogTitleEditValue = "Edit PlayerPref Value";
 
         // ─── New-entry defaults ───────────────────────────────────────────────
 
@@ -153,9 +159,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string FileExtJson             = "json";
         private const string ExportFileNameFmt       = "PlayerPrefs_{0}";
         private const string DialogTitleExport       = "Export PlayerPrefs to JSON";
+        private const string DialogTitleExportGroups = "Export Groups";
         private const string DialogTitleExportDone   = "Export Complete";
         private const string DialogTitleExportError  = "Export Error";
         private const string MsgExportSuccess        = "Exported {0} entries to:\n{1}";
+        private const string MsgExportGroupsEmpty    = "Select at least one group to export.";
         private const string DialogTitleImport       = "Import PlayerPrefs from JSON";
         private const string DialogTitleImportError  = "Import Error";
         private const string DialogTitleImportResult = "Import";
@@ -177,6 +185,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string EditorPrefsRowHeight = "UAppToolKit.PlayerPrefsEditor.RowHeight";
         private const string EditorPrefsFavorites = "UAppToolKit.PlayerPrefsEditor.FavoriteKeys";
         private const string EditorPrefsIgnored   = "UAppToolKit.PlayerPrefsEditor.IgnoredKeys";
+        private const string EditorPrefsGroups    = "UAppToolKit.PlayerPrefsEditor.Groups";
+        private const string EditorPrefsKeyGroups = "UAppToolKit.PlayerPrefsEditor.KeyGroups";
         private const float  RowHeightMin         = 18f;
         private const float  RowHeightMax         = 120f;
         private const float  RowHeightDefault     = 24f;
@@ -188,11 +198,14 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private List<PlayerPrefStore> _displayedPrefs = new List<PlayerPrefStore>();
         private readonly HashSet<string> _favoriteKeys =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly HashSet<string> _ignoredKeys =
+        private readonly HashSet<string> _customGroups =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _keyGroups =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<PlayerPrefStore> _selectedPrefs =
             new HashSet<PlayerPrefStore>();
-        private bool _showIgnoredTab;
+        private string _currentGroup = GroupMain;
+        private bool _syncingListSelection;
 
         // ─── Per-column filter state ──────────────────────────────────────────
 
@@ -216,10 +229,14 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private Label               _selectedCountLabel;
         private ToolbarButton       _deleteSelectedButton;
         private ToolbarButton       _restoreSelectedButton;
-        private ToolbarButton       _ignoreSelectedButton;
+        private ToolbarButton       _moveSelectedButton;
+        private ToolbarButton       _addGroupButton;
+        private TextField           _newGroupNameField;
+        private Toolbar             _tabsToolbar;
         private ToolbarToggle       _tabKeys;
-        private ToolbarToggle       _tabIgnored;
-        private Toggle              _selectAllToggle;
+        private TextField           _filterKeyField;
+        private DropdownField       _filterTypeField;
+        private TextField           _filterValueField;
         private VisualTreeAsset     _cellTemplatesAsset;
         private bool                _headerSyncRegistered;
         private VisualElement       _filterColKeyCell;
@@ -294,50 +311,48 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
             _deleteSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnDeleteSelected);
             _restoreSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnRestoreSelected);
-            _ignoreSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnIgnoreSelected);
+            _moveSelectedButton = rootVisualElement.Q<ToolbarButton>(NameBtnMoveSelected);
+            _addGroupButton = rootVisualElement.Q<ToolbarButton>(NameBtnAddGroup);
+            _newGroupNameField = rootVisualElement.Q<TextField>(NameNewGroupName);
+            _tabsToolbar = rootVisualElement.Q<Toolbar>(NameTabsToolbar);
             _tabKeys              = rootVisualElement.Q<ToolbarToggle>(NameTabKeys);
-            _tabIgnored           = rootVisualElement.Q<ToolbarToggle>(NameTabIgnored);
 
             rootVisualElement.Q<ToolbarButton>(NameBtnAddNew).clicked    += AddNewPref;
             _restoreSelectedButton.clicked += RestoreSelectedItems;
-            _ignoreSelectedButton.clicked  += ToggleIgnoredSelectedItems;
+            _moveSelectedButton.clicked += ShowMoveSelectedMenu;
             _deleteSelectedButton.clicked += DeleteSelectedItems;
             rootVisualElement.Q<ToolbarButton>(NameBtnDeleteAll).clicked += MarkAllForDelete;
             rootVisualElement.Q<ToolbarButton>(NameBtnSave).clicked      += SaveAll;
             rootVisualElement.Q<ToolbarButton>(NameBtnRefresh).clicked   += RefreshPlayerPrefs;
             rootVisualElement.Q<ToolbarButton>(NameBtnExport).clicked    += ExportToJson;
             rootVisualElement.Q<ToolbarButton>(NameBtnImport).clicked    += ImportFromJson;
+            _addGroupButton.clicked += BeginAddCustomGroup;
+            _newGroupNameField.RegisterCallback<KeyDownEvent>(OnNewGroupNameKeyDown);
 
             _tabKeys.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
-                    SetIgnoredTabVisible(false);
-                else if (!_showIgnoredTab)
+                    SetCurrentGroup(GroupMain);
+                else if (IsMainGroup(_currentGroup))
                     _tabKeys.SetValueWithoutNotify(true);
             });
 
-            _tabIgnored.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                    SetIgnoredTabVisible(true);
-                else if (_showIgnoredTab)
-                    _tabIgnored.SetValueWithoutNotify(true);
-            });
+            _filterKeyField = rootVisualElement.Q<TextField>(NameFilterKey);
+            _filterKeyField.RegisterValueChangedCallback(
+                evt =>
+                {
+                    _keyFilter       = evt.newValue ?? "";
+                    _keyFilterSearch = _keyFilter.ToLowerInvariant();
+                    RequestApplyFilter();
+                });
 
-            rootVisualElement.Q<TextField>(NameFilterKey)
-                .RegisterValueChangedCallback(
-                    evt =>
-                    {
-                        _keyFilter       = evt.newValue ?? "";
-                        _keyFilterSearch = _keyFilter.ToLowerInvariant();
-                        RequestApplyFilter();
-                    });
+            _errorBanner.RegisterCallback<PointerDownEvent>(_ => FocusFirstDuplicateKey());
 
-            var typeFilter = rootVisualElement.Q<DropdownField>(NameFilterType);
-            typeFilter.choices = new List<string> { TypeFilterAll };
-            typeFilter.choices.AddRange(PrefValue.AllTypeDisplayNames);
-            typeFilter.SetValueWithoutNotify(TypeFilterAll);
-            typeFilter.RegisterValueChangedCallback(evt =>
+            _filterTypeField = rootVisualElement.Q<DropdownField>(NameFilterType);
+            _filterTypeField.choices = new List<string> { TypeFilterAll };
+            _filterTypeField.choices.AddRange(PrefValue.AllTypeDisplayNames);
+            _filterTypeField.SetValueWithoutNotify(TypeFilterAll);
+            _filterTypeField.RegisterValueChangedCallback(evt =>
             {
                 _typeFilter = evt.newValue == TypeFilterAll
                     ? ""
@@ -345,16 +360,17 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 ApplyFilter();
             });
 
-            rootVisualElement.Q<TextField>(NameFilterValue)
-                .RegisterValueChangedCallback(
-                    evt =>
-                    {
-                        _valueFilter       = evt.newValue ?? "";
-                        _valueFilterSearch = _valueFilter.ToLowerInvariant();
-                        RequestApplyFilter();
-                    });
+            _filterValueField = rootVisualElement.Q<TextField>(NameFilterValue);
+            _filterValueField.RegisterValueChangedCallback(
+                evt =>
+                {
+                    _valueFilter       = evt.newValue ?? "";
+                    _valueFilterSearch = _valueFilter.ToLowerInvariant();
+                    RequestApplyFilter();
+                });
 
             UpdateTabLabels();
+            RebuildGroupControls();
             UpdateSelectedControls();
         }
 
@@ -394,13 +410,37 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private void LoadPersistentKeySets()
         {
             LoadStringSet(ProjectEditorPrefsKey(EditorPrefsFavorites), _favoriteKeys);
-            LoadStringSet(ProjectEditorPrefsKey(EditorPrefsIgnored),   _ignoredKeys);
+            string groupsKey = ProjectEditorPrefsKey(EditorPrefsGroups);
+            string keyGroupsKey = ProjectEditorPrefsKey(EditorPrefsKeyGroups);
+            bool hasSavedGroups = EditorPrefs.HasKey(groupsKey);
+            bool hasSavedKeyGroups = EditorPrefs.HasKey(keyGroupsKey);
+
+            LoadStringSet(groupsKey, _customGroups);
+            if (!hasSavedGroups)
+                _customGroups.Add(GroupIgnored);
+
+            LoadStringDictionary(keyGroupsKey, _keyGroups);
+            foreach (string group in _keyGroups.Values.Where(g => !IsMainGroup(g)).ToList())
+                _customGroups.Add(group);
+
+            var legacyIgnored = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            LoadStringSet(ProjectEditorPrefsKey(EditorPrefsIgnored), legacyIgnored);
+            if (!hasSavedKeyGroups && legacyIgnored.Count > 0)
+            {
+                _customGroups.Add(GroupIgnored);
+                foreach (string key in legacyIgnored)
+                    if (!_keyGroups.ContainsKey(key))
+                        _keyGroups[key] = GroupIgnored;
+            }
         }
 
         private void SavePersistentKeySets()
         {
             SaveStringSet(ProjectEditorPrefsKey(EditorPrefsFavorites), _favoriteKeys);
-            SaveStringSet(ProjectEditorPrefsKey(EditorPrefsIgnored),   _ignoredKeys);
+            SaveStringSet(ProjectEditorPrefsKey(EditorPrefsGroups), _customGroups);
+            SaveStringDictionary(ProjectEditorPrefsKey(EditorPrefsKeyGroups), _keyGroups);
+            SaveStringSet(ProjectEditorPrefsKey(EditorPrefsIgnored),
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase));
         }
 
         private static void LoadStringSet(string key, HashSet<string> target)
@@ -430,14 +470,76 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             EditorPrefs.SetString(key, data);
         }
 
+        private static void LoadStringDictionary(string key, Dictionary<string, string> target)
+        {
+            target.Clear();
+            string data = EditorPrefs.GetString(key, "");
+            if (string.IsNullOrEmpty(data)) return;
+
+            try
+            {
+                var values = JsonConvert.DeserializeObject<Dictionary<string, string>>(data);
+                if (values == null) return;
+                foreach (var pair in values)
+                    if (!string.IsNullOrEmpty(pair.Key) && !string.IsNullOrEmpty(pair.Value))
+                        target[pair.Key] = pair.Value;
+            }
+            catch
+            {
+                // Ignore corrupt editor-only metadata; PlayerPrefs data remains untouched.
+            }
+        }
+
+        private static void SaveStringDictionary(string key, Dictionary<string, string> source)
+        {
+            string data = JsonConvert.SerializeObject(
+                source
+                    .Where(pair => !string.IsNullOrEmpty(pair.Key) && !IsMainGroup(pair.Value))
+                    .OrderBy(pair => pair.Key)
+                    .ToDictionary(pair => pair.Key, pair => pair.Value));
+            EditorPrefs.SetString(key, data);
+        }
+
         private static string ProjectEditorPrefsKey(string baseKey) =>
             baseKey + "." + Application.dataPath.Replace('\\', '/');
 
         private bool IsFavorite(PlayerPrefStore pref) =>
             pref != null && _favoriteKeys.Contains(pref.name);
 
-        private bool IsIgnored(PlayerPrefStore pref) =>
-            pref != null && _ignoredKeys.Contains(pref.name);
+        private string GetGroup(PlayerPrefStore pref)
+        {
+            if (pref == null || string.IsNullOrEmpty(pref.name))
+                return GroupMain;
+            return _keyGroups.TryGetValue(pref.name, out string group) && IsKnownGroup(group)
+                ? group
+                : GroupMain;
+        }
+
+        private static bool IsMainGroup(string group) =>
+            string.Equals(group, GroupMain, StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrEmpty(group);
+
+        private bool IsDefaultGroup(string group) =>
+            IsMainGroup(group);
+
+        private bool IsKnownGroup(string group) =>
+            IsMainGroup(group) || _customGroups.Contains(group);
+
+        private List<string> GetAllGroups() =>
+            new[] { GroupMain }
+                .Concat(_customGroups.OrderBy(g => g, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+
+        private void SetGroup(PlayerPrefStore pref, string group)
+        {
+            if (pref == null || string.IsNullOrEmpty(pref.name)) return;
+
+            group = IsKnownGroup(group) ? group : GroupMain;
+            if (IsMainGroup(group))
+                _keyGroups.Remove(pref.name);
+            else
+                _keyGroups[pref.name] = group;
+        }
 
         private void ReplaceTrackedKey(string oldKey, string newKey)
         {
@@ -450,9 +552,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 if (!string.IsNullOrEmpty(newKey)) _favoriteKeys.Add(newKey);
                 changed = true;
             }
-            if (!string.IsNullOrEmpty(oldKey) && _ignoredKeys.Remove(oldKey))
+            if (!string.IsNullOrEmpty(oldKey) && _keyGroups.TryGetValue(oldKey, out string group))
             {
-                if (!string.IsNullOrEmpty(newKey)) _ignoredKeys.Add(newKey);
+                _keyGroups.Remove(oldKey);
+                if (!string.IsNullOrEmpty(newKey) && !IsMainGroup(group)) _keyGroups[newKey] = group;
                 changed = true;
             }
 
@@ -501,17 +604,20 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         }
 
         private bool IsInCurrentTab(PlayerPrefStore pref) =>
-            IsIgnored(pref) == _showIgnoredTab;
+            string.Equals(GetGroup(pref), _currentGroup, StringComparison.OrdinalIgnoreCase);
 
-        private void SetIgnoredTabVisible(bool showIgnored)
+        private void SetCurrentGroup(string group)
         {
-            if (_showIgnoredTab == showIgnored)
+            if (!IsKnownGroup(group))
+                group = GroupMain;
+
+            if (string.Equals(_currentGroup, group, StringComparison.OrdinalIgnoreCase))
             {
                 SyncTabToggles();
                 return;
             }
 
-            _showIgnoredTab = showIgnored;
+            _currentGroup = group;
             ClearSelectedPrefs();
             SyncTabToggles();
             ApplyFilter();
@@ -519,20 +625,85 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void SyncTabToggles()
         {
-            _tabKeys?.SetValueWithoutNotify(!_showIgnoredTab);
-            _tabIgnored?.SetValueWithoutNotify(_showIgnoredTab);
-            _tabKeys?.EnableInClassList(ClassTabActive, !_showIgnoredTab);
-            _tabIgnored?.EnableInClassList(ClassTabActive, _showIgnoredTab);
+            _tabKeys?.SetValueWithoutNotify(IsMainGroup(_currentGroup));
+            _tabKeys?.EnableInClassList(ClassTabActive, IsMainGroup(_currentGroup));
+            UpdateCustomGroupTabs();
         }
 
         private void UpdateTabLabels()
         {
             if (_tabKeys != null)
-                _tabKeys.text = TabTextKeys;
-            if (_tabIgnored != null)
-                _tabIgnored.text = string.Format(
-                    TabTextIgnoredFmt, _prefs.Count(IsIgnored));
+                _tabKeys.text = $"{TabTextKeys} ({_prefs.Count(p => IsMainGroup(GetGroup(p)))})";
+            UpdateCustomGroupTabs();
         }
+
+        private void RebuildGroupControls()
+        {
+            if (_tabsToolbar == null) return;
+
+            var oldCustomTabs = _tabsToolbar.Children()
+                .Where(e => e.userData is string)
+                .ToList();
+            foreach (var tab in oldCustomTabs)
+                tab.RemoveFromHierarchy();
+
+            var spacer = _tabsToolbar.Children()
+                .FirstOrDefault(e => e.ClassListContains("ppe-toolbar-spacer"));
+            int insertIndex = spacer == null ? _tabsToolbar.childCount : _tabsToolbar.IndexOf(spacer);
+
+            foreach (string group in _customGroups.OrderBy(g => g, StringComparer.OrdinalIgnoreCase))
+            {
+                var tab = new VisualElement { userData = group };
+                tab.AddToClassList("ppe-tab-with-close");
+
+                var toggle = new ToolbarToggle
+                {
+                    text = GetGroupTabText(group),
+                    userData = group,
+                };
+                toggle.AddToClassList("ppe-tab");
+                toggle.RegisterValueChangedCallback(evt =>
+                {
+                    if (toggle.userData is not string groupName) return;
+                    if (evt.newValue)
+                        SetCurrentGroup(groupName);
+                    else if (string.Equals(_currentGroup, groupName, StringComparison.OrdinalIgnoreCase))
+                        toggle.SetValueWithoutNotify(true);
+                });
+                tab.Add(toggle);
+
+                var close = new Button(() => DeleteGroup(group))
+                {
+                    text = "×",
+                    tooltip = string.Format(DialogTitleDeleteGroup + ": {0}", group),
+                };
+                close.AddToClassList("ppe-tab-close-btn");
+                tab.Add(close);
+
+                _tabsToolbar.Insert(insertIndex++, tab);
+            }
+
+            SyncTabToggles();
+        }
+
+        private void UpdateCustomGroupTabs()
+        {
+            if (_tabsToolbar == null) return;
+
+            foreach (var tabContainer in _tabsToolbar.Children().Where(e => e.userData is string))
+            {
+                if (tabContainer.userData is not string group) continue;
+                bool active = string.Equals(_currentGroup, group, StringComparison.OrdinalIgnoreCase);
+                var tab = tabContainer.Q<ToolbarToggle>();
+                if (tab == null) continue;
+                tab.text = GetGroupTabText(group);
+                tab.SetValueWithoutNotify(active);
+                tab.EnableInClassList(ClassTabActive, active);
+            }
+        }
+
+        private string GetGroupTabText(string group) =>
+            $"{group} ({_prefs.Count(p => string.Equals(GetGroup(p), group, StringComparison.OrdinalIgnoreCase))})";
 
         private void UpdateSelectedControls()
         {
@@ -545,15 +716,13 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             if (_restoreSelectedButton != null)
             {
                 _restoreSelectedButton.text = BtnTextRestoreSelected;
-                _restoreSelectedButton.SetEnabled(_selectedPrefs.Any(CanRestoreValue));
+                _restoreSelectedButton.SetEnabled(_selectedPrefs.Any(CanRestoreSelected));
             }
 
-            if (_ignoreSelectedButton != null)
+            if (_moveSelectedButton != null)
             {
-                _ignoreSelectedButton.text = _showIgnoredTab
-                    ? BtnTextUnignoreSelected
-                    : BtnTextIgnoreSelected;
-                _ignoreSelectedButton.SetEnabled(hasSelected);
+                _moveSelectedButton.text = BtnTextMoveSelected;
+                _moveSelectedButton.SetEnabled(hasSelected);
             }
 
             if (_deleteSelectedButton != null)
@@ -561,7 +730,6 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 _deleteSelectedButton.text = BtnTextDeleteSelected;
                 _deleteSelectedButton.SetEnabled(hasSelected);
             }
-            UpdateSelectAllToggle();
         }
 
         // =====================================================================
@@ -594,6 +762,58 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             }
 
             return hasDups;
+        }
+
+        private void FocusFirstDuplicateKey()
+        {
+            string duplicateKey = _duplicateKeys
+                .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+            if (string.IsNullOrEmpty(duplicateKey))
+                return;
+
+            var target = _prefs.FirstOrDefault(p =>
+                !p.isMarkedForDelete &&
+                string.Equals(p.name, duplicateKey, StringComparison.OrdinalIgnoreCase));
+            if (target == null)
+                return;
+
+            ClearFiltersWithoutNotify();
+            SetCurrentGroup(GetGroup(target));
+            ApplyFilter();
+            FocusPrefInList(target);
+        }
+
+        private void ClearFiltersWithoutNotify()
+        {
+            _keyFilter = "";
+            _keyFilterSearch = "";
+            _typeFilter = "";
+            _valueFilter = "";
+            _valueFilterSearch = "";
+
+            _filterKeyField?.SetValueWithoutNotify("");
+            _filterTypeField?.SetValueWithoutNotify(TypeFilterAll);
+            _filterValueField?.SetValueWithoutNotify("");
+        }
+
+        private void FocusPrefInList(PlayerPrefStore pref)
+        {
+            if (_listView == null || pref == null)
+                return;
+
+            int index = _displayedPrefs.IndexOf(pref);
+            if (index < 0)
+                return;
+
+            _selectedPrefs.Clear();
+            _selectedPrefs.Add(pref);
+            _syncingListSelection = true;
+            _listView.SetSelection(index);
+            _syncingListSelection = false;
+            _listView.ScrollToItem(index);
+            _listView.Focus();
+            UpdateSelectedControls();
         }
 
         // =====================================================================
@@ -629,9 +849,22 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             {
                 _listView.itemsSource = _displayedPrefs;
                 _listView.Rebuild();
+                SyncListSelectionToSelectedPrefs();
             }
 
             UpdateStatus();
+        }
+
+        private void SyncListSelectionToSelectedPrefs()
+        {
+            if (_listView == null) return;
+
+            _syncingListSelection = true;
+            _listView.ClearSelection();
+            for (int i = 0; i < _displayedPrefs.Count; i++)
+                if (_selectedPrefs.Contains(_displayedPrefs[i]))
+                    _listView.AddToSelection(i);
+            _syncingListSelection = false;
         }
 
         private void RequestApplyFilter()
@@ -672,45 +905,37 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         {
             var columns = new Columns();
 
-            // ── Selection checkbox ───────────────────────────────────────────
+            // ── Selection helper ─────────────────────────────────────────────
             var selectCol = new Column
             {
                 name = ColSelect, title = "",
                 width = 28, minWidth = 28, maxWidth = 28,
                 sortable = false, resizable = false,
             };
-            selectCol.makeHeader = MakeSelectHeader;
-            selectCol.bindHeader = _ => UpdateSelectAllToggle();
+            selectCol.makeHeader = () =>
+            {
+                var header = new VisualElement();
+                header.AddToClassList("ppe-select-header");
+                header.RegisterCallback<PointerDownEvent>(evt =>
+                {
+                    if (evt.button != 0) return;
+                    SelectAllDisplayedRows();
+                    evt.StopPropagation();
+                });
+                return header;
+            };
             selectCol.makeCell = () =>
             {
                 var cell = CloneCellTemplate(TplCellSelect);
-                var toggle = cell.Q<Toggle>(NameSelectToggle);
                 DisableFocusRecursive(cell);
-                toggle.RegisterValueChangedCallback(evt =>
-                {
-                    if (toggle.userData is not PlayerPrefStore pref) return;
-                    if (evt.newValue)
-                        _selectedPrefs.Add(pref);
-                    else
-                        _selectedPrefs.Remove(pref);
-                    UpdateSelectedControls();
-                });
                 return cell;
             };
             selectCol.bindCell = (element, index) =>
             {
-                var pref = _displayedPrefs[index];
-                var toggle = element.Q<Toggle>(NameSelectToggle);
-                toggle.userData = pref;
-                toggle.SetValueWithoutNotify(_selectedPrefs.Contains(pref));
-                toggle.SetEnabled(true);
-                ApplyRowStyle(element, pref, index);
+                element.userData = _displayedPrefs[index];
+                ApplyRowStyle(element, _displayedPrefs[index], index);
             };
-            selectCol.unbindCell = (element, _) =>
-            {
-                var toggle = element.Q<Toggle>(NameSelectToggle);
-                if (toggle != null) toggle.userData = null;
-            };
+            selectCol.unbindCell = (element, _) => element.userData = null;
             columns.Add(selectCol);
 
             // ── Favorite ─────────────────────────────────────────────────────
@@ -884,6 +1109,42 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             };
             columns.Add(valueCol);
 
+            // ── Edit Value ───────────────────────────────────────────────────
+            var editCol = new Column
+            {
+                name = ColEdit, title = "",
+                width = 28, minWidth = 28, maxWidth = 28,
+                sortable = false, resizable = false,
+            };
+            editCol.makeCell = () =>
+            {
+                var cell = CloneCellTemplate(TplCellEdit);
+                var btn = cell.Q<Button>(NameEditBtn);
+                DisableFocusRecursive(cell);
+                btn.clicked += () =>
+                {
+                    if (btn.userData is not PlayerPrefStore pref) return;
+                    OpenValueEditor(pref);
+                };
+                return cell;
+            };
+            editCol.bindCell = (element, index) =>
+            {
+                var pref = _displayedPrefs[index];
+                var btn = element.Q<Button>(NameEditBtn);
+                btn.userData = pref;
+                btn.text = BtnTextEdit;
+                btn.tooltip = TooltipEditValue;
+                btn.SetEnabled(!pref.isMarkedForDelete);
+                ApplyRowStyle(element, pref, index);
+            };
+            editCol.unbindCell = (element, _) =>
+            {
+                var btn = element.Q<Button>(NameEditBtn);
+                if (btn != null) btn.userData = null;
+            };
+            columns.Add(editCol);
+
             // ── Actions ───────────────────────────────────────────────────────
             var actCol = new Column
             {
@@ -894,15 +1155,9 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             actCol.makeCell = () =>
             {
                 var cell = CloneCellTemplate(TplCellActions);
-                var ignoreBtn = cell.Q<Button>(NameIgnoreBtn);
                 var restoreBtn = cell.Q<Button>(NameRestoreBtn);
                 var delBtn    = cell.Q<Button>(NameDelBtn);
                 DisableFocusRecursive(cell);
-                ignoreBtn.clicked += () =>
-                {
-                    if (ignoreBtn.userData is not PlayerPrefStore pref) return;
-                    ToggleIgnored(pref);
-                };
                 restoreBtn.clicked += () =>
                 {
                     if (restoreBtn.userData is not PlayerPrefStore pref) return;
@@ -918,16 +1173,9 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             actCol.bindCell = (element, index) =>
             {
                 var pref = _displayedPrefs[index];
-                var ignoreBtn = element.Q<Button>(NameIgnoreBtn);
                 var restoreBtn = element.Q<Button>(NameRestoreBtn);
                 var delBtn    = element.Q<Button>(NameDelBtn);
-                bool isIgnored = IsIgnored(pref);
                 bool canRestoreValue = CanRestoreValue(pref);
-
-                ignoreBtn.userData = pref;
-                ignoreBtn.text = isIgnored ? BtnTextUnignore : BtnTextIgnore;
-                ignoreBtn.tooltip = isIgnored ? TooltipUnignore : TooltipIgnore;
-                ignoreBtn.SetEnabled(!pref.isMarkedForDelete);
 
                 restoreBtn.userData = pref;
                 restoreBtn.text = BtnTextRestore;
@@ -942,10 +1190,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             };
             actCol.unbindCell = (element, _) =>
             {
-                var ignoreBtn = element.Q<Button>(NameIgnoreBtn);
                 var restoreBtn = element.Q<Button>(NameRestoreBtn);
                 var delBtn    = element.Q<Button>(NameDelBtn);
-                if (ignoreBtn != null) ignoreBtn.userData = null;
                 if (restoreBtn != null) restoreBtn.userData = null;
                 if (delBtn    != null) delBtn.userData    = null;
             };
@@ -957,82 +1203,78 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 name                          = NameList,
                 itemsSource                   = _displayedPrefs,
                 fixedItemHeight               = 24,
-                selectionType                 = SelectionType.None,
+                selectionType                 = SelectionType.Multiple,
                 sortingMode                   = ColumnSortingMode.Custom,
                 virtualizationMethod          = CollectionVirtualizationMethod.FixedHeight,
                 showAlternatingRowBackgrounds = AlternatingRowBackground.None,
             };
             _listView.AddToClassList(NameList); // .ppe-list { flex-grow: 1 } in USS
             _listView.columnSortingChanged += OnColumnSortingChanged;
+            _listView.selectionChanged += OnListSelectionChanged;
 
             (rootVisualElement.Q(NameListContainer) ?? rootVisualElement).Add(_listView);
 
             SetupFilterSync();
         }
 
-        private VisualElement MakeSelectHeader()
+        private void OnListSelectionChanged(IEnumerable<object> selectedItems)
         {
-            var header = new VisualElement();
-            header.AddToClassList("ppe-select-header");
+            if (_syncingListSelection)
+                return;
 
-            var toggle = new Toggle { name = NameSelectAllToggle };
-            toggle.AddToClassList("ppe-select-toggle");
-            toggle.AddToClassList("ppe-select-all-toggle");
-            toggle.RegisterValueChangedCallback(evt =>
-            {
-                if (toggle.userData is not bool ready || !ready) return;
-                SetVisibleSelection(evt.newValue);
-            });
-
-            header.Add(toggle);
-            DisableFocusRecursive(header);
-            _selectAllToggle = toggle;
-            return header;
-        }
-
-        private void SetVisibleSelection(bool selected)
-        {
-            var selectable = _displayedPrefs
-                .Where(IsSelectableForBulkSelection)
-                .ToList();
-
-            if (selectable.Count == 0) return;
-
-            if (selected)
-            {
-                foreach (var pref in selectable)
-                    _selectedPrefs.Add(pref);
-            }
-            else
-            {
-                foreach (var pref in selectable)
-                    _selectedPrefs.Remove(pref);
-            }
+            _selectedPrefs.Clear();
+            foreach (var pref in selectedItems.OfType<PlayerPrefStore>())
+                _selectedPrefs.Add(pref);
 
             UpdateSelectedControls();
-            _listView.RefreshItems();
         }
 
-        private bool IsSelectableForBulkSelection(PlayerPrefStore pref) =>
-            pref != null;
+        private void SelectAllDisplayedRows()
+        {
+            if (_listView == null || _displayedPrefs.Count == 0)
+                return;
+
+            _selectedPrefs.Clear();
+            foreach (var pref in _displayedPrefs)
+                _selectedPrefs.Add(pref);
+
+            _syncingListSelection = true;
+            _listView.SetSelection(Enumerable.Range(0, _displayedPrefs.Count));
+            _syncingListSelection = false;
+            UpdateSelectedControls();
+        }
+
+        private void OpenValueEditor(PlayerPrefStore pref)
+        {
+            if (pref == null || pref.isMarkedForDelete)
+                return;
+
+            ValueEditorWindow.ShowWindow(
+                pref.name,
+                pref.StringValue,
+                pref.value.TypeDisplayName,
+                value =>
+                {
+                    if (!pref.value.TrySetFromString(value))
+                    {
+                        EditorUtility.DisplayDialog(
+                            DialogTitleEditValue,
+                            string.Format(TooltipInvalidValue, pref.value.TypeDisplayName),
+                            DialogBtnOk);
+                        return false;
+                    }
+
+                    RefreshRow(pref);
+                    UpdateStatus();
+                    return true;
+                });
+        }
 
         private static bool CanRestoreValue(PlayerPrefStore pref) =>
             pref != null && !pref.isNew && !pref.isMarkedForDelete && pref.Changed;
 
-        private void UpdateSelectAllToggle()
-        {
-            if (_selectAllToggle == null) return;
-
-            int selectableCount = _displayedPrefs.Count(IsSelectableForBulkSelection);
-            bool allSelected = selectableCount > 0 && _displayedPrefs
-                .Where(IsSelectableForBulkSelection)
-                .All(p => _selectedPrefs.Contains(p));
-
-            _selectAllToggle.userData = false;
-            _selectAllToggle.SetValueWithoutNotify(allSelected);
-            _selectAllToggle.SetEnabled(selectableCount > 0);
-            _selectAllToggle.userData = true;
-        }
+        private static bool CanRestoreSelected(PlayerPrefStore pref) =>
+            pref != null && !pref.isNew && (pref.isMarkedForDelete || pref.Changed);
 
         // =====================================================================
         // Filter–column width synchronisation
@@ -1161,7 +1403,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 {
                     int cmp = primary.columnName switch
                     {
-                        ColFavorite => IsFavorite(b).CompareTo(IsFavorite(a)),
+                        ColFavorite => IsFavorite(a).CompareTo(IsFavorite(b)),
                         ColKey   => string.Compare(a.name, b.name,
                                         StringComparison.OrdinalIgnoreCase),
                         ColType  => string.Compare(a.value.TypeDisplayName,
@@ -1172,8 +1414,6 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                         _        => string.Compare(a.name, b.name,
                                         StringComparison.OrdinalIgnoreCase),
                     };
-                    if (primary.columnName == ColFavorite)
-                        return cmp;
                     return primary.direction == SortDirection.Descending ? -cmp : cmp;
                 }
                 _prefs.Sort(Compare);
@@ -1186,25 +1426,108 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void AddNewPref()
         {
-            if (_showIgnoredTab)
-                SetIgnoredTabVisible(false);
-
             var pref = new PlayerPrefStore(DefaultNewKey, PrefValue.Create(DefaultNewTypeId, ""))
             {
                 isNew = true,
             };
             _prefs.Add(pref);
+            SetGroup(pref, _currentGroup);
             ValidateDuplicates();
             SortPrefs();
             ApplyFilter();
             _listView.ScrollToItem(Mathf.Max(0, _displayedPrefs.IndexOf(pref)));
         }
 
+        private void BeginAddCustomGroup()
+        {
+            if (_newGroupNameField == null)
+                return;
+
+            if (_newGroupNameField.ClassListContains(ClassHidden))
+            {
+                _newGroupNameField.RemoveFromClassList(ClassHidden);
+                _newGroupNameField.Focus();
+                return;
+            }
+
+            AddCustomGroup();
+        }
+
+        private void OnNewGroupNameKeyDown(KeyDownEvent evt)
+        {
+            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+            {
+                AddCustomGroup();
+                evt.StopPropagation();
+            }
+            else if (evt.keyCode == KeyCode.Escape)
+            {
+                HideNewGroupField();
+                evt.StopPropagation();
+            }
+        }
+
+        private void HideNewGroupField()
+        {
+            if (_newGroupNameField == null)
+                return;
+
+            _newGroupNameField.SetValueWithoutNotify("");
+            _newGroupNameField.AddToClassList(ClassHidden);
+        }
+
+        private void AddCustomGroup()
+        {
+            string group = (_newGroupNameField?.value ?? "").Trim();
+            if (string.IsNullOrEmpty(group))
+            {
+                EditorUtility.DisplayDialog(DialogTitleInvalidGroup, MsgGroupNameRequired, DialogBtnOk);
+                return;
+            }
+
+            if (IsKnownGroup(group))
+            {
+                EditorUtility.DisplayDialog(DialogTitleInvalidGroup, MsgGroupNameReserved, DialogBtnOk);
+                return;
+            }
+
+            _customGroups.Add(group);
+            HideNewGroupField();
+            SavePersistentKeySets();
+            RebuildGroupControls();
+            SetCurrentGroup(group);
+        }
+
+        private void DeleteGroup(string group)
+        {
+            if (IsDefaultGroup(group) || !_customGroups.Contains(group))
+                return;
+
+            bool confirmed = EditorUtility.DisplayDialog(
+                DialogTitleDeleteGroup,
+                string.Format(MsgDeleteGroupFmt, group),
+                DialogBtnOk,
+                DialogBtnCancel);
+            if (!confirmed) return;
+
+            foreach (var pref in _prefs.Where(p =>
+                         string.Equals(GetGroup(p), group, StringComparison.OrdinalIgnoreCase)))
+                SetGroup(pref, GroupMain);
+
+            _customGroups.Remove(group);
+            if (string.Equals(_currentGroup, group, StringComparison.OrdinalIgnoreCase))
+                _currentGroup = GroupMain;
+            SavePersistentKeySets();
+            RebuildGroupControls();
+            ValidateDuplicates();
+            ApplyFilter();
+        }
+
         private void MarkAllForDelete()
         {
             foreach (var p in _prefs)
             {
-                if (IsIgnored(p)) continue;
+                if (!IsInCurrentTab(p)) continue;
                 p.isMarkedForDelete = true;
                 _selectedPrefs.Remove(p);
             }
@@ -1225,20 +1548,6 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             ApplyFilter();
         }
 
-        private void ToggleIgnored(PlayerPrefStore pref)
-        {
-            if (pref == null || string.IsNullOrEmpty(pref.name)) return;
-
-            if (!_ignoredKeys.Remove(pref.name))
-                _ignoredKeys.Add(pref.name);
-
-            _selectedPrefs.Remove(pref);
-            SavePersistentKeySets();
-            ValidateDuplicates();
-            SortPrefs();
-            ApplyFilter();
-        }
-
         private void RestoreValue(PlayerPrefStore pref)
         {
             if (!CanRestoreValue(pref))
@@ -1253,39 +1562,55 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private void RestoreSelectedItems()
         {
             var toRestore = _selectedPrefs
-                .Where(CanRestoreValue)
+                .Where(CanRestoreSelected)
                 .ToList();
 
             if (toRestore.Count == 0) return;
 
             foreach (var pref in toRestore)
-                pref.Reset();
+            {
+                if (pref.isMarkedForDelete)
+                    pref.isMarkedForDelete = false;
+                else
+                    pref.Reset();
+            }
 
+            ValidateDuplicates();
             SortPrefs();
             ApplyFilter();
         }
 
-        private void ToggleIgnoredSelectedItems()
+        private void ShowMoveSelectedMenu()
         {
+            if (_selectedPrefs.Count == 0 || _moveSelectedButton == null)
+                return;
+
+            var menu = new GenericMenu();
+            foreach (string group in GetAllGroups())
+            {
+                string targetGroup = group;
+                menu.AddItem(new GUIContent(targetGroup), false,
+                    () => MoveSelectedItemsToGroup(targetGroup));
+            }
+            menu.DropDown(_moveSelectedButton.worldBound);
+        }
+
+        private void MoveSelectedItemsToGroup(string targetGroup)
+        {
+            if (!IsKnownGroup(targetGroup))
+                targetGroup = GroupMain;
+
             var selected = _selectedPrefs
                 .Where(p => p != null)
                 .ToList();
 
             if (selected.Count == 0) return;
 
-            if (_showIgnoredTab)
-            {
-                foreach (var pref in selected)
-                    _ignoredKeys.Remove(pref.name);
-            }
-            else
-            {
-                foreach (var pref in selected)
-                    if (!string.IsNullOrEmpty(pref.name))
-                        _ignoredKeys.Add(pref.name);
-            }
+            foreach (var pref in selected)
+                SetGroup(pref, targetGroup);
 
             _selectedPrefs.Clear();
+            _listView?.ClearSelection();
             SavePersistentKeySets();
             ValidateDuplicates();
             SortPrefs();
@@ -1327,7 +1652,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 {
                     PlayerPrefs.DeleteKey(pref.name);
                     _favoriteKeys.Remove(pref.name);
-                    _ignoredKeys.Remove(pref.name);
+                    _keyGroups.Remove(pref.name);
                     _selectedPrefs.Remove(pref);
                     _prefs.RemoveAt(i);
                     continue;
@@ -1353,22 +1678,44 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
         private void ExportToJson()
         {
+            ExportGroupsWindow.ShowWindow(GetAllGroups(), groups =>
+            {
+                if (groups == null || groups.Count == 0)
+                {
+                    EditorUtility.DisplayDialog(DialogTitleExportGroups, MsgExportGroupsEmpty, DialogBtnOk);
+                    return;
+                }
+
+                ExportGroupsToJson(groups);
+            });
+        }
+
+        private void ExportGroupsToJson(List<string> groups)
+        {
             string defaultName = string.Format(ExportFileNameFmt, PlayerSettings.productName);
             string path = EditorUtility.SaveFilePanel(
                 DialogTitleExport, "", defaultName, FileExtJson);
             if (string.IsNullOrEmpty(path)) return;
 
-            var exportable = _prefs
-                .Where(p => !p.isMarkedForDelete && !IsIgnored(p))
-                .ToList();
+            var exportableGroups = groups
+                .Where(IsKnownGroup)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    group => group,
+                    group => _prefs
+                        .Where(p => !p.isMarkedForDelete &&
+                                    string.Equals(GetGroup(p), group, StringComparison.OrdinalIgnoreCase))
+                        .ToList(),
+                    StringComparer.OrdinalIgnoreCase);
+            int exportCount = exportableGroups.Sum(pair => pair.Value.Count);
             try
             {
                 File.WriteAllText(path,
-                    _serializer.Serialize(exportable),
+                    _serializer.SerializeGroups(exportableGroups),
                     System.Text.Encoding.UTF8);
                 EditorUtility.DisplayDialog(
                     DialogTitleExportDone,
-                    string.Format(MsgExportSuccess, exportable.Count, path),
+                    string.Format(MsgExportSuccess, exportCount, path),
                     DialogBtnOk);
             }
             catch (Exception ex)
@@ -1551,7 +1898,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         {
             if (_selectedPrefs.Count == 0) return;
             _selectedPrefs.Clear();
-            _listView?.RefreshItems();
+            _listView?.ClearSelection();
             UpdateSelectedControls();
         }
 
@@ -1572,9 +1919,128 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             }
 
             _selectedPrefs.Clear();
+            _listView?.ClearSelection();
             ValidateDuplicates();
             ApplyFilter();
         }
+
+        private sealed class ExportGroupsWindow : EditorWindow
+        {
+            private Action<List<string>> _onExport;
+            private readonly List<Toggle> _toggles = new List<Toggle>();
+
+            public static void ShowWindow(List<string> groups, Action<List<string>> onExport)
+            {
+                var window = CreateInstance<ExportGroupsWindow>();
+                window.titleContent = new GUIContent(DialogTitleExportGroups);
+                window._onExport = onExport;
+                window.minSize = new Vector2(260, 180);
+                window.Build(groups);
+                window.ShowUtility();
+            }
+
+            private void Build(List<string> groups)
+            {
+                rootVisualElement.style.paddingLeft = 8;
+                rootVisualElement.style.paddingRight = 8;
+                rootVisualElement.style.paddingTop = 8;
+                rootVisualElement.style.paddingBottom = 8;
+
+                var scroll = new ScrollView();
+                foreach (string group in groups)
+                {
+                    var toggle = new Toggle(group) { value = true };
+                    _toggles.Add(toggle);
+                    scroll.Add(toggle);
+                }
+
+                var buttons = new VisualElement();
+                buttons.style.flexDirection = FlexDirection.Row;
+                buttons.style.justifyContent = Justify.FlexEnd;
+                buttons.style.marginTop = 8;
+
+                var cancel = new Button(Close) { text = DialogBtnCancel };
+                var export = new Button(() =>
+                {
+                    var selected = _toggles
+                        .Where(t => t.value)
+                        .Select(t => t.label)
+                        .ToList();
+                    Close();
+                    _onExport?.Invoke(selected);
+                })
+                {
+                    text = DialogBtnOk,
+                };
+
+                buttons.Add(cancel);
+                buttons.Add(export);
+                rootVisualElement.Add(scroll);
+                rootVisualElement.Add(buttons);
+            }
+        }
+
+        private sealed class ValueEditorWindow : EditorWindow
+        {
+            private Func<string, bool> _onOk;
+            private TextField _valueField;
+
+            public static void ShowWindow(
+                string key,
+                string value,
+                string typeName,
+                Func<string, bool> onOk)
+            {
+                var window = CreateInstance<ValueEditorWindow>();
+                window.titleContent = new GUIContent(DialogTitleEditValue);
+                window._onOk = onOk;
+                window.minSize = new Vector2(360, 220);
+                window.position = new Rect(200, 200, 640, 420);
+                window.Build(key, value, typeName);
+                window.ShowUtility();
+            }
+
+            private void Build(string key, string value, string typeName)
+            {
+                rootVisualElement.style.paddingLeft = 8;
+                rootVisualElement.style.paddingRight = 8;
+                rootVisualElement.style.paddingTop = 8;
+                rootVisualElement.style.paddingBottom = 8;
+
+                var title = new Label($"{key} ({typeName})");
+                title.style.marginBottom = 6;
+                title.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+                _valueField = new TextField
+                {
+                    multiline = true,
+                    value = value,
+                };
+                _valueField.style.flexGrow = 1;
+                _valueField.style.whiteSpace = WhiteSpace.Normal;
+
+                var buttons = new VisualElement();
+                buttons.style.flexDirection = FlexDirection.Row;
+                buttons.style.justifyContent = Justify.FlexEnd;
+                buttons.style.marginTop = 8;
+
+                var cancel = new Button(Close) { text = DialogBtnCancel };
+                var ok = new Button(() =>
+                {
+                    if (_onOk?.Invoke(_valueField.value ?? "") == false)
+                        return;
+                    Close();
+                })
+                {
+                    text = DialogBtnOk,
+                };
+
+                buttons.Add(cancel);
+                buttons.Add(ok);
+                rootVisualElement.Add(title);
+                rootVisualElement.Add(_valueField);
+                rootVisualElement.Add(buttons);
+            }
+        }
     }
 }
-
