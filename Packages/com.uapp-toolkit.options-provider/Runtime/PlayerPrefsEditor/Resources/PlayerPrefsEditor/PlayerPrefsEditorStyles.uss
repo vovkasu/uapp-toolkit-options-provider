@@ -13,6 +13,12 @@
 }
 
 /* ─── Toolbar ─────────────────────────────────────────────── */
+.ppe-toolbar {
+    flex-direction: row;
+    align-items: center;
+    min-height: 24px;
+}
+
 .ppe-toolbar-btn {
     font-size: 12px;
     padding: 0 8px;
@@ -42,6 +48,9 @@
 
 /* ─── Tabs ────────────────────────────────────────────────── */
 .ppe-tabs {
+    flex-direction: row;
+    align-items: center;
+    min-height: 24px;
     border-bottom-width: 1px;
     border-color: rgba(0, 0, 0, 0.16);
 }
@@ -153,6 +162,102 @@
     color: rgb(200, 80, 0);
     -unity-font-style: bold;
     font-size: 11px;
+    white-space: normal;
+}
+
+/* ─── Snapshot Files ──────────────────────────────────────── */
+.ppe-snapshots-panel {
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 100px;
+}
+
+.ppe-snapshot-actions {
+    flex-direction: row;
+    align-items: center;
+    min-height: 28px;
+    padding: 2px 4px;
+    border-bottom-width: 1px;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.ppe-snapshot-name-field {
+    width: 260px;
+    margin-right: 6px;
+}
+
+.ppe-snapshot-name-field > .unity-base-field__label {
+    min-width: 42px;
+    width: 42px;
+}
+
+.ppe-snapshots-list-container {
+    flex-grow: 1;
+    min-height: 100px;
+}
+
+.ppe-snapshots-list {
+    flex-grow: 1;
+    min-height: 100px;
+}
+
+.ppe-snapshot-cell {
+    flex-direction: row;
+    align-items: center;
+    padding: 1px 4px;
+    height: 100%;
+    overflow: hidden;
+}
+
+.ppe-snapshot-label {
+    flex-grow: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ppe-snapshot-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ppe-snapshot-count {
+    -unity-text-align: middle-left;
+}
+
+.ppe-snapshot-size {
+    -unity-text-align: middle-left;
+}
+
+.ppe-snapshot-created {
+    -unity-text-align: middle-left;
+}
+
+.ppe-snapshot-action-cell {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 1px 2px;
+}
+
+.ppe-snapshot-action {
+    width: 54px;
+    min-width: 54px;
+    margin-left: 2px;
+    margin-right: 2px;
+    padding: 0 4px;
+}
+
+.ppe-snapshot-delete {
+    color: rgb(220, 70, 70);
+}
+
+.ppe-snapshot-empty {
+    padding: 8px;
+    color: rgba(210, 210, 210, 0.75);
     white-space: normal;
 }
 

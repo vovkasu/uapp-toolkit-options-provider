@@ -1,4 +1,3 @@
-#if PLAYER_PREFS_RUNTIME_TOOL
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
 using System;
 using System.Collections.Generic;
@@ -247,5 +246,4 @@ namespace YummyDev.PlayerPrefsEditor
         }
     }
 }
-#endif
 #endif

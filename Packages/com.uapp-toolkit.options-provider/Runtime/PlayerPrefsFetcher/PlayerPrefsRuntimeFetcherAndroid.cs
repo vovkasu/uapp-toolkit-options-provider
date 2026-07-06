@@ -1,4 +1,3 @@
-#if PLAYER_PREFS_RUNTIME_TOOL
 #if UNITY_ANDROID && !UNITY_EDITOR
 using System;
 using UnityEngine;
@@ -142,5 +141,4 @@ namespace YummyDev.PlayerPrefsEditor
         }
     }
 }
-#endif
 #endif

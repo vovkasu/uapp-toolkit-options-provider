@@ -1,4 +1,4 @@
-#if PLAYER_PREFS_RUNTIME_TOOL
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +16,7 @@ namespace YummyDev.PlayerPrefsEditor
     /// macOS editor implementation for retrieving PlayerPrefs at runtime.
     /// Parses plist files directly from the file system in the Unity editor.
     /// </summary>
-    public class PlayerPrefsRuntimeFetcherMacOSEditor : IPlayerPrefsRuntimeFetcher
+    public class PlayerPrefsRuntimeFetcherMacOSFileSystem : IPlayerPrefsRuntimeFetcher
     {
         /// <summary>
         /// Retrieves all PlayerPrefs by parsing macOS plist files.
@@ -330,5 +330,11 @@ namespace YummyDev.PlayerPrefsEditor
             }
         }
     }
+
+#if UNITY_EDITOR_OSX
+    public sealed class PlayerPrefsRuntimeFetcherMacOSEditor : PlayerPrefsRuntimeFetcherMacOSFileSystem
+    {
+    }
+#endif
 }
 #endif

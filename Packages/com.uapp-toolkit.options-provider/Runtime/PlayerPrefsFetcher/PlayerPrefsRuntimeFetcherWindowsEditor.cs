@@ -1,4 +1,3 @@
-#if PLAYER_PREFS_RUNTIME_TOOL
 #if UNITY_EDITOR_WIN
 using System;
 using System.Collections.Generic;
@@ -34,5 +33,4 @@ namespace YummyDev.PlayerPrefsEditor
         }
     }
 }
-#endif
 #endif

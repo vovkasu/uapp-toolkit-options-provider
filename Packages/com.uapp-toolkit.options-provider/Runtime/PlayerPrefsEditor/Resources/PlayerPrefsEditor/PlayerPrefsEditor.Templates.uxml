@@ -4,7 +4,7 @@
     Hidden cell templates cloned in C# via VisualTreeAsset.CloneTree for makeCell.
     This file is never added to the scene hierarchy directly.
 -->
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
 
     <!-- ── Selection helper column cell ──────────────────────────────────── -->
     <ui:VisualElement name="tpl-cell-select" class="ppe-cell ppe-cell--select" />
