@@ -1,27 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
 
+    <!-- ── Tabs ──────────────────────────────────────────────────────────── -->
+    <ui:ScrollView name="tabs-scroll" class="ppe-tabs-scroll" mode="Vertical">
+        <ui:VisualElement name="tabs-toolbar" class="ppe-tabs">
+            <ui:Toggle name="tab-snapshots" class="ppe-tab" label="Snapshots" value="false" />
+            <ui:Toggle name="tab-keys"    class="ppe-tab" label="Keys" value="true" />
+            <ui:Button name="btn-add-group" class="ppe-toolbar-btn ppe-toolbar-btn--group" text="+ Group" />
+            <ui:VisualElement class="ppe-toolbar-spacer" />
+        </ui:VisualElement>
+    </ui:ScrollView>
+
     <!-- ── Toolbar ───────────────────────────────────────────────────────── -->
     <ui:VisualElement class="ppe-toolbar">
-        <ui:Button name="btn-add-new"    class="ppe-toolbar-btn" text="✚ Add New" />
+        <ui:Button name="btn-add-new"    class="ppe-toolbar-btn ppe-toolbar-btn--entry" text="✚ New Entry" />
         <ui:Label name="selected-count-label" class="ppe-selected-count" text="Selected: 0" />
-        <ui:Button name="btn-restore-selected" class="ppe-toolbar-btn" text="↩ Restore Selected" />
-        <ui:Button name="btn-move-selected" class="ppe-toolbar-btn" text="Move To Group" />
-        <ui:Button name="btn-delete-selected" class="ppe-toolbar-btn" text="✕ Delete Selected" />
+        <ui:Button name="btn-restore-selected" class="ppe-toolbar-btn ppe-toolbar-btn--selection" text="↩ Restore Selected" />
+        <ui:Button name="btn-move-selected" class="ppe-toolbar-btn ppe-toolbar-btn--selection" text="Move To Group" />
+        <ui:Button name="btn-delete-selected" class="ppe-toolbar-btn ppe-toolbar-btn--danger" text="✕ Delete Selected" />
         <ui:VisualElement class="ppe-toolbar-spacer" />
-        <ui:Button name="btn-delete-all" class="ppe-toolbar-btn ppe-danger-btn" text="✕ Delete All" />
-        <ui:Button name="btn-save"       class="ppe-toolbar-btn" text="💾 Save" />
-        <ui:Button name="btn-refresh"    class="ppe-toolbar-btn" text="↺ Refresh" />
-        <ui:Button name="btn-export"     class="ppe-toolbar-btn" text="⬆ Export JSON" />
-        <ui:Button name="btn-import"     class="ppe-toolbar-btn" text="⬇ Import JSON" />
-    </ui:VisualElement>
-
-    <!-- ── Tabs ──────────────────────────────────────────────────────────── -->
-    <ui:VisualElement name="tabs-toolbar" class="ppe-tabs">
-        <ui:Toggle name="tab-snapshots" class="ppe-tab" label="Snapshots" value="false" />
-        <ui:Toggle name="tab-keys"    class="ppe-tab" label="Keys" value="true" />
-        <ui:Button name="btn-add-group" class="ppe-toolbar-btn" text="+ Group" />
-        <ui:VisualElement class="ppe-toolbar-spacer" />
+        <ui:Button name="btn-delete-all" class="ppe-toolbar-btn ppe-toolbar-btn--danger ppe-danger-btn" text="✕ Delete All" />
+        <ui:Button name="btn-save"       class="ppe-toolbar-btn ppe-toolbar-btn--data" text="💾 Save" />
+        <ui:Button name="btn-refresh"    class="ppe-toolbar-btn ppe-toolbar-btn--data" text="↺ Refresh" />
+        <ui:Button name="btn-export"     class="ppe-toolbar-btn ppe-toolbar-btn--io" text="⬆ Export JSON" />
+        <ui:Button name="btn-import"     class="ppe-toolbar-btn ppe-toolbar-btn--io" text="⬇ Import JSON" />
     </ui:VisualElement>
 
     <!-- ── Status bar ────────────────────────────────────────────────────── -->
@@ -37,8 +39,8 @@
                           class="ppe-snapshot-name-field"
                           label="Name"
                           is-delayed="false" />
-            <ui:Button name="btn-save-snapshot" class="ppe-toolbar-btn" text="Save Snapshot" />
-            <ui:Button name="btn-refresh-snapshots" class="ppe-toolbar-btn" text="Refresh" />
+            <ui:Button name="btn-save-snapshot" class="ppe-toolbar-btn ppe-toolbar-btn--data" text="Save Snapshot" />
+            <ui:Button name="btn-refresh-snapshots" class="ppe-toolbar-btn ppe-toolbar-btn--data" text="Refresh" />
         </ui:VisualElement>
         <ui:VisualElement name="snapshots-list-container" class="ppe-snapshots-list-container" />
     </ui:VisualElement>

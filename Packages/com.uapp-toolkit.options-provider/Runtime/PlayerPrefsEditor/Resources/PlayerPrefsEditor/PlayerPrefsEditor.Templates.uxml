@@ -22,7 +22,7 @@
 
     <!-- ── Type column cell ──────────────────────────────────────────────── -->
     <ui:VisualElement name="tpl-cell-type" class="ppe-cell">
-        <ui:DropdownField name="type-field" class="ppe-cell-field" />
+        <ui:DropdownField name="type-field" class="ppe-cell-field ppe-cell-field--type" />
     </ui:VisualElement>
 
     <!-- ── Value column cell ─────────────────────────────────────────────── -->
