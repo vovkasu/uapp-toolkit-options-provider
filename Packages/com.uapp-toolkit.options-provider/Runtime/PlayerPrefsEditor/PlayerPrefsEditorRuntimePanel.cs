@@ -119,8 +119,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private static bool IsCurrentEditorSimulatorPortrait()
         {
             Rect safeArea = Screen.safeArea;
-            return IsPortraitAspect(Screen.width, Screen.height, EditorSimulatorPortraitMinAspect) ||
-                   IsPortraitAspect(safeArea.width, safeArea.height, EditorSimulatorPortraitMinAspect);
+            return (IsPortraitAspect(Screen.width, Screen.height, EditorSimulatorPortraitMinAspect) &&
+                    IsNarrowWidth(Screen.width)) ||
+                   (IsPortraitAspect(safeArea.width, safeArea.height, EditorSimulatorPortraitMinAspect) &&
+                    IsNarrowWidth(safeArea.width));
         }
 #endif
 
@@ -365,7 +367,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 return IsCurrentRuntimePortrait() || ShouldUseNarrowMobileLayout();
 
 #if UNITY_EDITOR
-            return IsCurrentRuntimePortrait() || ShouldUseNarrowMobileLayout();
+            return IsCurrentRuntimePortrait() && ShouldUseNarrowMobileLayout();
 #else
             return false;
 #endif

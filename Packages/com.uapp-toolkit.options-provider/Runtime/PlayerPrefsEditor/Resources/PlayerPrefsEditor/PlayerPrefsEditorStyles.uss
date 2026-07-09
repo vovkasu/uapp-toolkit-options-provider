@@ -156,8 +156,30 @@
     color: rgba(210, 210, 210, 0.85);
 }
 
+.ppe-status-row {
+    flex-direction: row;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+.ppe-status-row .ppe-status {
+    flex-grow: 1;
+}
+
+.ppe-mobile-quick-actions {
+    display: none;
+}
+
+.ppe-mobile-new-entry {
+    display: none;
+}
+
 .ppe-toolbar-spacer {
     flex-grow: 1;
+}
+
+.ppe-toolbar-fold-toggle {
+    display: none;
 }
 
 /* ─── Tabs ────────────────────────────────────────────────── */
@@ -326,6 +348,12 @@
     border-bottom-width: 1px;
     border-color: rgba(0, 0, 0, 0.45);
     background-color: rgb(34, 34, 34);
+}
+
+.ppe-snapshot-name-row,
+.ppe-snapshot-buttons-row {
+    flex-direction: row;
+    align-items: center;
 }
 
 .ppe-snapshot-name-field {
@@ -883,6 +911,7 @@
 /* ─── Phone portrait layout ───────────────────────────────── */
 .ppe-phone-portrait {
     min-width: 0;
+    background-color: rgb(14, 14, 14);
 }
 
 .ppe-phone-portrait .ppe-toolbar,
@@ -895,6 +924,49 @@
     padding: 4px;
 }
 
+.ppe-phone-portrait .ppe-tabs-scroll {
+    min-height: 72px;
+    max-height: 72px;
+    padding: 8px 8px 7px 8px;
+    border-bottom-width: 1px;
+    border-color: rgba(255, 255, 255, 0.07);
+    background-color: rgb(28, 28, 28);
+}
+
+.ppe-phone-portrait .ppe-mobile-quick-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    margin: 4px 4px 0 4px;
+    padding: 6px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(24, 24, 24);
+}
+
+.ppe-phone-portrait .ppe-tabs-scroll .unity-scroller--horizontal {
+    height: 3px;
+    min-height: 3px;
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.ppe-phone-portrait .ppe-tabs-scroll .unity-scroller--horizontal .unity-scroller__slider {
+    height: 3px;
+    min-height: 3px;
+    border-radius: 2px;
+    background-color: rgba(210, 210, 210, 0.70);
+}
+
+.ppe-phone-portrait .ppe-tabs-scroll .unity-scroller--horizontal .unity-scroller__low-button,
+.ppe-phone-portrait .ppe-tabs-scroll .unity-scroller--horizontal .unity-scroller__high-button {
+    display: none;
+    width: 0;
+    min-width: 0;
+    height: 0;
+}
+
 .ppe-phone-portrait .ppe-toolbar-spacer {
     display: none;
 }
@@ -905,76 +977,146 @@
 .ppe-phone-portrait .ppe-icon-btn,
 .ppe-phone-portrait .ppe-delete-btn,
 .ppe-phone-portrait .ppe-snapshot-action {
-    min-height: 36px;
-    font-size: 13px;
-    border-radius: 4px;
+    min-height: 48px;
+    font-size: 15px;
+    border-radius: 7px;
 }
 
 .ppe-phone-portrait .ppe-toolbar-btn {
-    margin: 2px;
-    padding: 0 10px;
+    margin: 3px;
+    padding: 0 12px;
     min-width: 0;
+    width: 47%;
+    border-width: 1px;
+    -unity-text-align: middle-center;
+}
+
+.ppe-phone-portrait .ppe-mobile-quick-actions .ppe-toolbar-btn {
+    min-height: 42px;
+    margin: 0 3px;
+    padding: 0 8px;
+    font-size: 14px;
     width: auto;
 }
 
 .ppe-phone-portrait .ppe-selected-count {
-    min-height: 36px;
-    min-width: 112px;
-    padding: 0 8px;
-    margin: 2px;
-    font-size: 12px;
+    display: none;
+    min-height: 48px;
+    min-width: 0;
+    width: 48.5%;
+    padding: 0 14px;
+    margin: 4px;
+    font-size: 15px;
     -unity-text-align: middle-left;
+    border-radius: 7px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgb(28, 28, 28);
+    color: rgb(232, 232, 232);
+}
+
+.ppe-phone-portrait .ppe-toolbar {
+    margin: 0 4px;
+    padding: 8px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(24, 24, 24);
+}
+
+.ppe-phone-portrait .ppe-toolbar-fold-toggle {
+    display: flex;
+    width: 100%;
+    background-color: rgb(42, 46, 54);
+    border-color: rgba(125, 155, 210, 0.40);
+}
+
+.ppe-phone-portrait .ppe-status-row {
+    margin: 4px 4px 0 4px;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.ppe-phone-portrait .ppe-mobile-new-entry {
+    display: flex;
+    min-width: 0;
+    min-height: 42px;
+    margin: 0 3px;
+    padding: 0 8px;
+    font-size: 14px;
+    border-radius: 7px;
 }
 
 .ppe-phone-portrait .ppe-tabs {
-    flex-direction: column;
+    flex-direction: row;
     flex-wrap: nowrap;
     align-items: stretch;
-    width: 100%;
-    border-top-width: 1px;
-    border-color: rgba(0, 0, 0, 0.16);
-}
-
-.ppe-phone-portrait .ppe-tabs-scroll {
-    max-height: 168px;
+    width: auto;
     min-height: 0;
+    padding: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(0, 0, 0, 0);
 }
 
 .ppe-phone-portrait .ppe-tab {
     flex-grow: 0;
-    min-width: 0;
-    margin: 2px;
-    padding: 0 10px;
+    min-width: 150px;
+    min-height: 54px;
+    margin: 0 4px;
+    padding: 0 16px;
+    border-radius: 7px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.20);
+    background-color: rgb(46, 46, 46);
+    font-size: 16px;
+    -unity-text-align: middle-center;
+}
+
+.ppe-phone-portrait .ppe-tab--active {
+    background-color: rgb(45, 82, 132);
+    border-color: rgba(105, 165, 255, 0.72);
 }
 
 .ppe-phone-portrait .ppe-tab-with-close {
     flex-grow: 0;
-    min-width: 0;
-    margin: 2px;
+    min-width: 190px;
+    min-height: 54px;
+    margin: 0 4px;
 }
 
 .ppe-phone-portrait .ppe-tab-with-close .ppe-tab {
     margin: 0;
-    min-width: 0;
+    min-width: 142px;
 }
 
 .ppe-phone-portrait .ppe-tab-close-btn {
-    width: 36px;
-    min-width: 36px;
-    margin-left: 2px;
-    font-size: 14px;
+    width: 42px;
+    min-width: 42px;
+    min-height: 54px;
+    margin-left: 4px;
+    font-size: 16px;
 }
 
 .ppe-phone-portrait .ppe-tabs > .ppe-toolbar-btn {
-    min-width: 0;
-    margin: 2px;
+    min-width: 58px;
+    min-height: 54px;
+    margin: 0 4px;
+    width: auto;
+    font-size: 22px;
 }
 
 .ppe-phone-portrait .ppe-status {
-    min-height: 30px;
-    padding: 5px 8px;
-    font-size: 12px;
+    min-height: 34px;
+    padding: 6px 10px;
+    font-size: 13px;
     white-space: normal;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(18, 18, 18);
+    color: rgb(224, 224, 224);
 }
 
 .ppe-phone-portrait .ppe-error-banner {
@@ -983,10 +1125,16 @@
 }
 
 .ppe-phone-portrait .ppe-filter-row {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: nowrap;
     align-items: stretch;
-    padding: 4px;
+    margin: 4px 4px 0 4px;
+    padding: 12px 10px;
     min-height: 0;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(22, 22, 22);
 }
 
 .ppe-phone-portrait .ppe-filter-col-select,
@@ -1006,26 +1154,87 @@
     flex-grow: 0;
     flex-shrink: 0;
     border-right-width: 0;
-    padding: 3px 0;
+    padding: 2px 4px;
 }
 
 .ppe-phone-portrait .ppe-filter-field {
-    min-height: 34px;
+    min-height: 48px;
 }
 
 .ppe-phone-portrait .ppe-filter-field .unity-base-text-field__input,
 .ppe-phone-portrait .ppe-filter-field .unity-dropdown-field__input {
-    min-height: 32px;
-    padding: 0 8px;
-    font-size: 13px;
+    min-height: 46px;
+    padding: 0 12px;
+    font-size: 15px;
+    border-radius: 7px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.18);
+    background-color: rgb(32, 32, 32);
 }
 
 .ppe-phone-portrait .ppe-row-resize-handle {
     display: none;
 }
 
+.ppe-phone-portrait .ppe-list-container {
+    margin: 0 4px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    background-color: rgb(18, 18, 18);
+}
+
+.ppe-phone-portrait .ppe-list {
+    background-color: rgb(18, 18, 18);
+}
+
+.ppe-phone-portrait .ppe-list .unity-multi-column-header,
+.ppe-phone-portrait .ppe-list .unity-multi-column-header__column,
+.ppe-phone-portrait .ppe-list .unity-multi-column-list-view__header,
+.ppe-phone-portrait .ppe-snapshots-list .unity-multi-column-header,
+.ppe-phone-portrait .ppe-snapshots-list .unity-multi-column-header__column,
+.ppe-phone-portrait .ppe-snapshots-list .unity-multi-column-list-view__header {
+    min-height: 48px;
+    background-color: rgb(34, 34, 34);
+    border-color: rgba(255, 255, 255, 0.10);
+    color: rgb(235, 235, 235);
+}
+
+.ppe-phone-portrait .ppe-list .unity-list-view__item,
+.ppe-phone-portrait .ppe-list .unity-collection-view__item,
+.ppe-phone-portrait .ppe-snapshots-list .unity-list-view__item,
+.ppe-phone-portrait .ppe-snapshots-list .unity-collection-view__item {
+    background-color: rgb(20, 20, 20);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.ppe-phone-portrait .ppe-row--selected {
+    background-color: rgb(32, 58, 92);
+    border-left-width: 3px;
+    border-color: rgba(95, 165, 255, 0.95);
+}
+
+.ppe-phone-portrait .ppe-row--selected .ppe-cell-field,
+.ppe-phone-portrait .ppe-row--selected .ppe-cell-field .unity-base-field__input,
+.ppe-phone-portrait .ppe-row--selected .ppe-cell-field .unity-base-text-field__input,
+.ppe-phone-portrait .ppe-row--selected .ppe-cell-field .unity-enum-field__input,
+.ppe-phone-portrait .ppe-row--selected .ppe-cell-field .unity-dropdown-field__input,
+.ppe-phone-portrait .ppe-row--selected .ppe-cell-field .unity-base-popup-field__input,
+.ppe-phone-portrait .ppe-row--selected .ppe-cell-field .unity-popup-field__input {
+    background-color: rgb(26, 50, 82);
+    border-color: rgba(110, 175, 255, 0.75);
+}
+
+.ppe-phone-portrait .ppe-row--selected .ppe-icon-btn,
+.ppe-phone-portrait .ppe-row--selected .ppe-delete-btn {
+    background-color: rgb(40, 66, 104);
+    border-color: rgba(120, 185, 255, 0.75);
+}
+
 .ppe-phone-portrait .ppe-cell {
-    padding: 4px 5px;
+    padding: 5px 6px;
+    color: rgb(226, 226, 226);
 }
 
 .ppe-phone-portrait .ppe-cell-field,
@@ -1035,8 +1244,12 @@
 .ppe-phone-portrait .ppe-cell-field .unity-dropdown-field__input,
 .ppe-phone-portrait .ppe-cell-field .unity-base-popup-field__input,
 .ppe-phone-portrait .ppe-cell-field .unity-popup-field__input {
-    min-height: 32px;
-    font-size: 13px;
+    min-height: 40px;
+    font-size: 15px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgb(24, 24, 24);
 }
 
 .ppe-phone-portrait .ppe-cell-field .unity-base-text-field__input,
@@ -1072,10 +1285,13 @@
 
 .ppe-phone-portrait .ppe-icon-btn,
 .ppe-phone-portrait .ppe-delete-btn {
-    width: 34px;
-    min-width: 34px;
-    height: 34px;
-    font-size: 14px;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    font-size: 18px;
+    border-radius: 6px;
+    border-color: rgba(255, 255, 255, 0.18);
+    background-color: rgb(44, 44, 44);
 }
 
 .ppe-phone-portrait .ppe-error-icon,
@@ -1087,9 +1303,41 @@
 .ppe-phone-portrait .ppe-snapshot-name-field {
     flex-grow: 1;
     width: auto;
-    min-width: 220px;
-    margin: 2px;
+    min-width: 0;
+    margin: 0;
     min-height: 36px;
+}
+
+.ppe-phone-portrait .ppe-snapshot-actions {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    margin: 4px;
+    padding: 6px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(24, 24, 24);
+}
+
+.ppe-phone-portrait .ppe-snapshot-name-row,
+.ppe-phone-portrait .ppe-snapshot-buttons-row {
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.ppe-phone-portrait .ppe-snapshot-buttons-row {
+    margin-top: 6px;
+}
+
+.ppe-phone-portrait .ppe-snapshot-buttons-row .ppe-toolbar-btn {
+    flex-grow: 1;
+    flex-shrink: 1;
+    width: 50%;
+    min-width: 0;
 }
 
 .ppe-phone-portrait .ppe-snapshot-name-field > .unity-base-field__label {
@@ -1169,35 +1417,39 @@
 .ppe-phone-narrow .ppe-icon-btn,
 .ppe-phone-narrow .ppe-delete-btn,
 .ppe-phone-narrow .ppe-snapshot-action {
-    min-height: 32px;
-    font-size: 12px;
+    min-height: 42px;
+    font-size: 13px;
 }
 
 .ppe-phone-narrow .ppe-toolbar-btn {
     min-width: 0;
-    padding: 0 7px;
-    margin: 2px;
+    width: 47%;
+    padding: 0 8px;
+    margin: 3px;
 }
 
 .ppe-phone-narrow .ppe-selected-count {
-    min-width: 84px;
-    min-height: 32px;
-    font-size: 11px;
-    padding: 0 6px;
-}
-
-.ppe-phone-narrow .ppe-tab {
     min-width: 0;
+    width: 48%;
+    min-height: 42px;
+    font-size: 13px;
     padding: 0 8px;
 }
 
+.ppe-phone-narrow .ppe-tab {
+    min-width: 132px;
+    min-height: 48px;
+    padding: 0 10px;
+}
+
 .ppe-phone-narrow .ppe-tabs-scroll {
-    max-height: 148px;
+    min-height: 66px;
+    max-height: 66px;
 }
 
 .ppe-phone-narrow .ppe-tab-close-btn {
-    width: 32px;
-    min-width: 32px;
+    width: 38px;
+    min-width: 38px;
 }
 
 .ppe-phone-narrow .ppe-status {
@@ -1217,8 +1469,8 @@
 .ppe-phone-narrow .ppe-filter-field,
 .ppe-phone-narrow .ppe-filter-field .unity-base-text-field__input,
 .ppe-phone-narrow .ppe-filter-field .unity-dropdown-field__input {
-    min-height: 30px;
-    font-size: 12px;
+    min-height: 40px;
+    font-size: 13px;
 }
 
 .ppe-phone-narrow .ppe-cell {
@@ -1238,10 +1490,10 @@
 
 .ppe-phone-narrow .ppe-icon-btn,
 .ppe-phone-narrow .ppe-delete-btn {
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    font-size: 13px;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    font-size: 16px;
 }
 
 .ppe-phone-narrow .ppe-snapshot-name-field {

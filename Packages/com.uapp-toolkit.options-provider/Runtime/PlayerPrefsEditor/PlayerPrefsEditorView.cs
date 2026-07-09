@@ -41,6 +41,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string NameSnapshotRowLoad = "snapshot-row-load";
         private const string NameSnapshotRowDelete = "snapshot-row-delete";
         private const string NameList          = "ppe-list";
+        private const string NameStatusRow     = "status-row";
+        private const string NameMobileQuickActions = "mobile-quick-actions";
         private const string NameTabsScrollView = "tabs-scroll";
         private const string NameTabsVisualElement   = "tabs-toolbar";
         private const string NameTabSnapshots  = "tab-snapshots";
@@ -58,13 +60,17 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         // ─── VisualElement button names ─────────────────────────────────────────────
 
         private const string NameBtnAddNew    = "btn-add-new";
+        private const string NameBtnAddNewMobile = "btn-add-new-mobile";
         private const string NameBtnRestoreSelected = "btn-restore-selected";
         private const string NameBtnDeleteSelected = "btn-delete-selected";
         private const string NameBtnDeleteAll = "btn-delete-all";
         private const string NameBtnSave      = "btn-save";
         private const string NameBtnRefresh   = "btn-refresh";
+        private const string NameBtnSaveMobile = "btn-save-mobile";
+        private const string NameBtnRefreshMobile = "btn-refresh-mobile";
         private const string NameBtnExport    = "btn-export";
         private const string NameBtnImport    = "btn-import";
+        private const string NameBtnActionsFold = "btn-actions-fold";
         private const string NameBtnAddGroup  = "btn-add-group";
         private const string NameBtnMoveSelected = "btn-move-selected";
         private const string NameBtnSaveSnapshot = "btn-save-snapshot";
@@ -94,6 +100,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string ClassRowEdited     = "ppe-row--edited";
         private const string ClassRowDuplicate  = "ppe-row--duplicate";
         private const string ClassRowOdd        = "ppe-row--odd";
+        private const string ClassRowSelected   = "ppe-row--selected";
         private const string ClassTabActive     = "ppe-tab--active";
         private const string ClassDialogOverlay = "ppe-dialog-overlay";
         private const string ClassDialog = "ppe-dialog";
@@ -139,6 +146,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const string ClassMultiColumnHeader = "unity-multi-column-header";
         private const string ClassFilterColKey      = "ppe-filter-col-key";
         private const string ClassFilterColType     = "ppe-filter-col-type";
+        private const string ClassFilterColValue    = "ppe-filter-col-value";
 
         // ─── Action-button texts / tooltips ───────────────────────────────────
 
@@ -264,7 +272,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private const float  RowHeightMin         = 18f;
         private const float  RowHeightMax         = 120f;
         private const float  RowHeightDefault     = 24f;
-        private const float  PhoneRowHeight = 42f;
+        private const float  PhoneRowHeight = 54f;
         private const float  SnapshotRowHeightDefault = 28f;
         private const float  PhoneSnapshotRowHeight = 46f;
         private const float  PhoneTabsScrollMaxHeight = 168f;
@@ -290,6 +298,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private string _currentGroup = GroupMain;
         private bool _showingSnapshots;
         private bool _syncingListSelection;
+        private bool _mobileActionsFolded = true;
         private int _selectionAnchorIndex = -1;
         private int _pendingSelectionAnchorIndex = -1;
         private PlayerPrefStore _dragStartPref;
@@ -319,6 +328,8 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private MultiColumnListView _listView;
         private MultiColumnListView _snapshotsListView;
         private Label               _statusLabel;
+        private VisualElement       _statusRow;
+        private VisualElement       _mobileQuickActions;
         private Label               _errorBanner;
         private Label               _selectedCountLabel;
         private Button       _deleteSelectedButton;
@@ -344,6 +355,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private bool                _headerSyncRegistered;
         private VisualElement       _filterColKeyCell;
         private VisualElement       _filterColTypeCell;
+        private VisualElement       _filterColValueCell;
         private float               _rowHeight = RowHeightDefault;
         private bool                _isPhonePortraitLayout;
         private Column              _selectColumn;
@@ -434,12 +446,15 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
         private void ConnectUxmlElements()
         {
             _statusLabel = _root.Q<Label>(NameStatusLabel);
+            _statusRow = _root.Q<VisualElement>(NameStatusRow);
+            _mobileQuickActions = _root.Q<VisualElement>(NameMobileQuickActions);
             _errorBanner = _root.Q<Label>(NameErrorBanner);
             _selectedCountLabel = _root.Q<Label>(NameSelectedCountLabel);
             // error banner starts hidden via ppe-hidden class in UXML
 
             _filterColKeyCell  = _root.Q<VisualElement>(null, ClassFilterColKey);
             _filterColTypeCell = _root.Q<VisualElement>(null, ClassFilterColType);
+            _filterColValueCell = _root.Q<VisualElement>(null, ClassFilterColValue);
             _mainToolbar = _root.Q<VisualElement>(className: "ppe-toolbar");
             _filterRow = _root.Q<VisualElement>(className: "ppe-filter-row");
             _rowResizeHandle = _root.Q<VisualElement>(NameRowResizeHandle);
@@ -458,14 +473,18 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             _tabKeys              = _root.Q<Toggle>(NameTabKeys);
 
             _root.Q<Button>(NameBtnAddNew).clicked    += AddNewPref;
+            _root.Q<Button>(NameBtnAddNewMobile).clicked += AddNewPref;
             _restoreSelectedButton.clicked += RestoreSelectedItems;
             _moveSelectedButton.clicked += ShowMoveSelectedMenu;
             _deleteSelectedButton.clicked += DeleteSelectedItems;
             _root.Q<Button>(NameBtnDeleteAll).clicked += DeleteAllPrefsImmediately;
             _root.Q<Button>(NameBtnSave).clicked      += SaveAll;
             _root.Q<Button>(NameBtnRefresh).clicked   += RefreshPlayerPrefs;
+            _root.Q<Button>(NameBtnSaveMobile).clicked += SaveAll;
+            _root.Q<Button>(NameBtnRefreshMobile).clicked += RefreshPlayerPrefs;
             _root.Q<Button>(NameBtnExport).clicked    += ExportToJson;
             _root.Q<Button>(NameBtnImport).clicked    += ImportFromJson;
+            _root.Q<Button>(NameBtnActionsFold).clicked += ToggleMobileActionsFolded;
             _addGroupButton.clicked += BeginAddCustomGroup;
             _root.Q<Button>(NameBtnSaveSnapshot).clicked += SaveSnapshot;
             _root.Q<Button>(NameBtnRefreshSnapshots).clicked += RefreshSnapshots;
@@ -554,6 +573,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             var status = _root.Q<Label>(NameStatusLabel);
             if (status != null)
                 status.style.flexShrink = 0;
+
+            var mobileQuickActions = _root.Q<VisualElement>(NameMobileQuickActions);
+            if (mobileQuickActions != null)
+                mobileQuickActions.style.flexShrink = 0;
 
             var error = _root.Q<Label>(NameErrorBanner);
             if (error != null)
@@ -646,6 +669,9 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             {
                 ApplyAdaptiveToolbarLayout();
                 ApplyAdaptiveTabsLayout();
+                ApplyAdaptiveFilterLayout();
+                ApplyAdaptiveRootOrder();
+                ApplyAdaptiveMainOnlyVisibility();
                 ApplyAdaptiveRowHeights();
                 return;
             }
@@ -656,6 +682,9 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             _root.EnableInClassList(ClassPhoneNarrow, _isNarrowPhoneLayout);
             ApplyAdaptiveToolbarLayout();
             ApplyAdaptiveTabsLayout();
+            ApplyAdaptiveFilterLayout();
+            ApplyAdaptiveRootOrder();
+            ApplyAdaptiveMainOnlyVisibility();
             ApplyAdaptiveColumns();
             ApplyAdaptiveRowHeights();
             _listView?.Rebuild();
@@ -680,20 +709,14 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             bool screenNarrow = IsNarrowWidth(Screen.width);
             bool safeAreaNarrow = IsNarrowWidth(safeArea.width);
 
-            if (Application.isMobilePlatform &&
-                (rootPortrait || screenPortrait || safeAreaPortrait ||
-                 rootNarrow || screenNarrow || safeAreaNarrow))
-            {
-                return true;
-            }
+            if (Application.isMobilePlatform)
+                return rootPortrait || screenPortrait || safeAreaPortrait ||
+                       rootNarrow || screenNarrow || safeAreaNarrow;
 
 #if UNITY_EDITOR
-            return rootEditorSimulatorPortrait ||
-                   screenEditorSimulatorPortrait ||
-                   safeAreaEditorSimulatorPortrait ||
-                   rootNarrow ||
-                   screenNarrow ||
-                   safeAreaNarrow;
+            return (rootEditorSimulatorPortrait && rootNarrow) ||
+                   (screenEditorSimulatorPortrait && screenNarrow) ||
+                   (safeAreaEditorSimulatorPortrait && safeAreaNarrow);
 #else
             return false;
 #endif
@@ -723,6 +746,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             if (_mainToolbar == null)
                 return;
 
+            ApplyAdaptiveMobileQuickActionsLayout();
+            ApplyAdaptiveToolbarOrder();
+            ApplyAdaptiveToolbarTexts();
+
             _mainToolbar.style.flexDirection = FlexDirection.Row;
             _mainToolbar.style.flexWrap = _isPhonePortraitLayout ? Wrap.Wrap : Wrap.NoWrap;
             _mainToolbar.style.alignItems = _isPhonePortraitLayout ? Align.Stretch : Align.Center;
@@ -736,7 +763,125 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             }
         }
 
-        private static void ApplyPhoneToolbarChildLayout(VisualElement child)
+        private void ApplyAdaptiveToolbarOrder()
+        {
+            if (_mainToolbar == null)
+                return;
+
+            var spacer = _mainToolbar.Query<VisualElement>(className: "ppe-toolbar-spacer").First();
+
+            if (_isPhonePortraitLayout)
+            {
+                foreach (string name in new[]
+                {
+                    NameBtnActionsFold,
+                    NameBtnExport,
+                    NameBtnImport,
+                    NameBtnDeleteAll,
+                    NameBtnMoveSelected,
+                    NameBtnRestoreSelected,
+                    NameBtnDeleteSelected,
+                    NameBtnAddNew,
+                })
+                {
+                    AddToolbarChildToEnd(_mainToolbar.Q<VisualElement>(name));
+                }
+
+                AddToolbarChildToEnd(spacer);
+                return;
+            }
+
+            foreach (string name in new[]
+            {
+                NameBtnActionsFold,
+                NameBtnAddNew,
+                NameSelectedCountLabel,
+                NameBtnRestoreSelected,
+                NameBtnMoveSelected,
+                NameBtnDeleteSelected,
+            })
+            {
+                AddToolbarChildToEnd(_mainToolbar.Q<VisualElement>(name));
+            }
+
+            AddToolbarChildToEnd(spacer);
+
+            foreach (string name in new[]
+            {
+                NameBtnDeleteAll,
+                NameBtnSave,
+                NameBtnRefresh,
+                NameBtnExport,
+                NameBtnImport,
+            })
+            {
+                AddToolbarChildToEnd(_mainToolbar.Q<VisualElement>(name));
+            }
+        }
+
+        private void AddToolbarChildToEnd(VisualElement child)
+        {
+            if (child == null || child.parent != _mainToolbar)
+                return;
+
+            _mainToolbar.Add(child);
+        }
+
+        private void ApplyAdaptiveToolbarTexts()
+        {
+            SetButtonText(NameBtnExport, _isPhonePortraitLayout ? "⬆ Export" : "⬆ Export JSON");
+            SetButtonText(NameBtnImport, _isPhonePortraitLayout ? "⬇ Import" : "⬇ Import JSON");
+            SetButtonText(NameBtnAddGroup, _isPhonePortraitLayout ? "+" : "+ Group");
+            SetButtonText(NameBtnActionsFold, _mobileActionsFolded ? "Actions ▾" : "Actions ▴");
+        }
+
+        private void ApplyAdaptiveMobileQuickActionsLayout()
+        {
+            if (_mobileQuickActions == null)
+                return;
+
+            bool visible = _isPhonePortraitLayout && !_showingSnapshots;
+            _mobileQuickActions.EnableInClassList(ClassHidden, !visible);
+            _mobileQuickActions.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!visible)
+                return;
+
+            _mobileQuickActions.style.flexDirection = FlexDirection.Row;
+            _mobileQuickActions.style.flexWrap = Wrap.NoWrap;
+            _mobileQuickActions.style.alignItems = Align.Stretch;
+
+            SetMobileQuickButtonLayout(NameBtnAddNewMobile, 44f);
+            SetMobileQuickButtonLayout(NameBtnSaveMobile, 27f);
+            SetMobileQuickButtonLayout(NameBtnRefreshMobile, 29f);
+        }
+
+        private void SetMobileQuickButtonLayout(string name, float widthPercent)
+        {
+            var button = _mobileQuickActions?.Q<Button>(name);
+            if (button == null)
+                return;
+
+            button.style.display = DisplayStyle.Flex;
+            button.style.width = Length.Percent(widthPercent);
+            button.style.minWidth = 0;
+            button.style.flexGrow = 1;
+            button.style.flexShrink = 1;
+        }
+
+        private void ToggleMobileActionsFolded()
+        {
+            _mobileActionsFolded = !_mobileActionsFolded;
+            ApplyAdaptiveToolbarLayout();
+        }
+
+        private void SetButtonText(string name, string text)
+        {
+            var button = _root.Q<Button>(name);
+            if (button != null && button.text != text)
+                button.text = text;
+        }
+
+        private void ApplyPhoneToolbarChildLayout(VisualElement child)
         {
             if (child.ClassListContains("ppe-toolbar-spacer"))
             {
@@ -744,20 +889,53 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 return;
             }
 
+            if (child.name == NameSelectedCountLabel)
+            {
+                child.style.display = DisplayStyle.None;
+                return;
+            }
+
+            if (child.name == NameBtnAddNew)
+            {
+                child.style.display = DisplayStyle.None;
+                return;
+            }
+
+            if (child.name == NameBtnSave || child.name == NameBtnRefresh)
+            {
+                child.style.display = DisplayStyle.None;
+                return;
+            }
+
+            if (_mobileActionsFolded &&
+                child.name != NameBtnActionsFold)
+            {
+                child.style.display = DisplayStyle.None;
+                return;
+            }
+
             child.style.display = DisplayStyle.Flex;
-            child.style.flexGrow = 0;
-            child.style.flexShrink = 0;
+            child.style.flexGrow = 1;
+            child.style.flexShrink = 1;
             child.style.alignSelf = Align.Stretch;
-            child.style.width = StyleKeyword.Auto;
+            child.style.width = child.name == NameBtnActionsFold
+                ? Length.Percent(100f)
+                : Length.Percent(47f);
 
             if (child is Button)
                 child.style.minWidth = 0;
             else
-                child.style.minWidth = StyleKeyword.Null;
+                child.style.minWidth = 0;
         }
 
         private static void ApplyDesktopToolbarChildLayout(VisualElement child)
         {
+            if (child.name == NameBtnActionsFold)
+            {
+                child.style.display = DisplayStyle.None;
+                return;
+            }
+
             child.style.display = DisplayStyle.Flex;
             child.style.width = StyleKeyword.Auto;
             child.style.minWidth = StyleKeyword.Null;
@@ -778,6 +956,97 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             child.style.flexShrink = 0;
         }
 
+        private void ApplyAdaptiveFilterLayout()
+        {
+            if (_filterRow == null)
+                return;
+
+            if (_isPhonePortraitLayout)
+            {
+                AddFilterChildToEnd(_filterColKeyCell);
+                AddFilterChildToEnd(_filterColTypeCell);
+                AddFilterChildToEnd(_filterColValueCell);
+
+                ApplyPhoneFilterCellLayout(_filterColKeyCell, 36f);
+                ApplyPhoneFilterCellLayout(_filterColTypeCell, 24f);
+                ApplyPhoneFilterCellLayout(_filterColValueCell, 36f);
+                return;
+            }
+
+            RestoreDesktopFilterOrder();
+            ClearPhoneFilterCellLayout(_filterColKeyCell);
+            ClearPhoneFilterCellLayout(_filterColValueCell);
+            ClearPhoneFilterCellLayout(_filterColTypeCell);
+        }
+
+        private void AddFilterChildToEnd(VisualElement child)
+        {
+            if (child == null || child.parent != _filterRow)
+                return;
+
+            _filterRow.Add(child);
+        }
+
+        private void RestoreDesktopFilterOrder()
+        {
+            AddFilterChildToEnd(_filterRow.Q<VisualElement>(null, "ppe-filter-col-select"));
+            AddFilterChildToEnd(_filterRow.Q<VisualElement>(null, "ppe-filter-col-favorite"));
+            AddFilterChildToEnd(_filterColKeyCell);
+            AddFilterChildToEnd(_filterColTypeCell);
+            AddFilterChildToEnd(_filterColValueCell);
+            AddFilterChildToEnd(_filterRow.Q<VisualElement>(null, "ppe-filter-col-edit"));
+            AddFilterChildToEnd(_filterRow.Q<VisualElement>(null, "ppe-filter-col-action"));
+        }
+
+        private static void ApplyPhoneFilterCellLayout(VisualElement child, float widthPercent)
+        {
+            if (child == null)
+                return;
+
+            child.style.width = Length.Percent(widthPercent);
+            child.style.minWidth = 0;
+            child.style.flexGrow = 1;
+            child.style.flexShrink = 1;
+        }
+
+        private static void ClearPhoneFilterCellLayout(VisualElement child)
+        {
+            if (child == null)
+                return;
+
+            child.style.width = StyleKeyword.Null;
+            child.style.minWidth = StyleKeyword.Null;
+            child.style.flexGrow = StyleKeyword.Null;
+            child.style.flexShrink = StyleKeyword.Null;
+        }
+
+        private void ApplyAdaptiveRootOrder()
+        {
+            if (_statusRow == null || _filterRow == null ||
+                _statusRow.parent != _root || _filterRow.parent != _root)
+            {
+                return;
+            }
+
+            _statusRow.RemoveFromHierarchy();
+            int filterIndex = _root.IndexOf(_filterRow);
+            int targetIndex;
+            if (_isPhonePortraitLayout)
+            {
+                targetIndex = filterIndex + 1;
+            }
+            else if (_errorBanner != null && _errorBanner.parent == _root)
+            {
+                targetIndex = Mathf.Max(0, _root.IndexOf(_errorBanner));
+            }
+            else
+            {
+                targetIndex = Mathf.Min(_root.childCount, 2);
+            }
+
+            _root.Insert(targetIndex, _statusRow);
+        }
+
         private void ApplyAdaptiveTabsLayout()
         {
             ApplyAdaptiveTabsScrollLayout();
@@ -791,9 +1060,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 
             if (_isPhonePortraitLayout)
             {
-                _tabsVisualElement.style.flexDirection = FlexDirection.Column;
+                _tabsVisualElement.style.flexDirection = FlexDirection.Row;
                 _tabsVisualElement.style.flexWrap = Wrap.NoWrap;
                 _tabsVisualElement.style.alignItems = Align.Stretch;
+                _tabsVisualElement.style.width = StyleKeyword.Auto;
 
                 foreach (var child in _tabsVisualElement.Children())
                     ApplyPhoneTabChildLayout(child);
@@ -817,23 +1087,24 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             _tabsScrollView.style.flexGrow = 0;
             _tabsScrollView.style.flexShrink = 0;
             _tabsScrollView.style.width = Length.Percent(100);
-            _tabsScrollView.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
 
             if (_isPhonePortraitLayout)
             {
-                _tabsScrollView.style.maxHeight = _isNarrowPhoneLayout
-                    ? NarrowPhoneTabsScrollMaxHeight
-                    : PhoneTabsScrollMaxHeight;
+                _tabsScrollView.mode = ScrollViewMode.Horizontal;
+                _tabsScrollView.style.maxHeight = StyleKeyword.Null;
                 _tabsScrollView.style.minHeight = 0;
-                _tabsScrollView.verticalScrollerVisibility = ScrollerVisibility.Auto;
-                _tabsScrollView.contentContainer.style.flexDirection = FlexDirection.Column;
+                _tabsScrollView.horizontalScrollerVisibility = ScrollerVisibility.Auto;
+                _tabsScrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+                _tabsScrollView.contentContainer.style.flexDirection = FlexDirection.Row;
                 _tabsScrollView.contentContainer.style.flexGrow = 0;
                 _tabsScrollView.contentContainer.style.flexShrink = 0;
                 return;
             }
 
+            _tabsScrollView.mode = ScrollViewMode.Vertical;
             _tabsScrollView.style.maxHeight = StyleKeyword.Null;
             _tabsScrollView.style.minHeight = StyleKeyword.Null;
+            _tabsScrollView.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             _tabsScrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
             _tabsScrollView.contentContainer.style.flexDirection = FlexDirection.Column;
             _tabsScrollView.contentContainer.style.flexGrow = 0;
@@ -852,12 +1123,12 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             child.style.flexGrow = 0;
             child.style.flexShrink = 0;
             child.style.alignSelf = Align.Stretch;
-            child.style.width = Length.Percent(100);
-            child.style.minWidth = 0;
-            child.style.marginLeft = 2;
-            child.style.marginRight = 2;
-            child.style.marginTop = 2;
-            child.style.marginBottom = 2;
+            child.style.width = StyleKeyword.Auto;
+            child.style.minWidth = child is Button ? 58 : 150;
+            child.style.marginLeft = 4;
+            child.style.marginRight = 4;
+            child.style.marginTop = 0;
+            child.style.marginBottom = 0;
 
             if (child.ClassListContains("ppe-tab-with-close"))
             {
@@ -870,7 +1141,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                     toggle.style.flexGrow = 1;
                     toggle.style.flexShrink = 1;
                     toggle.style.width = StyleKeyword.Auto;
-                    toggle.style.minWidth = 0;
+                    toggle.style.minWidth = 136;
                     toggle.style.marginLeft = 0;
                     toggle.style.marginRight = 0;
                     toggle.style.marginTop = 0;
@@ -894,16 +1165,16 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             {
                 directToggle.style.flexGrow = 0;
                 directToggle.style.flexShrink = 0;
-                directToggle.style.width = Length.Percent(100);
-                directToggle.style.minWidth = 0;
+                directToggle.style.width = StyleKeyword.Auto;
+                directToggle.style.minWidth = 150;
             }
 
             if (child is Button directButton)
             {
                 directButton.style.flexGrow = 0;
                 directButton.style.flexShrink = 0;
-                directButton.style.width = Length.Percent(100);
-                directButton.style.minWidth = 0;
+                directButton.style.width = StyleKeyword.Auto;
+                directButton.style.minWidth = 58;
             }
         }
 
@@ -962,12 +1233,12 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             if (_isNarrowPhoneLayout)
             {
                 SetColumnWidth(_selectColumn, 24, 24, 24);
-                SetColumnWidth(_favoriteColumn, 34, 34, 34);
-                SetColumnWidth(_keyColumn, 150, 120, null);
-                SetColumnWidth(_typeColumn, 116, 108, 128);
-                SetColumnWidth(_valueColumn, 180, 140, null);
-                SetColumnWidth(_editColumn, 36, 36, 36);
-                SetColumnWidth(_rowActionColumn, 36, 36, 36);
+                SetColumnWidth(_favoriteColumn, 48, 48, 48);
+                SetColumnWidth(_keyColumn, 230, 190, null);
+                SetColumnWidth(_typeColumn, 72, 66, 82);
+                SetColumnWidth(_valueColumn, 150, 120, null);
+                SetColumnWidth(_editColumn, 50, 50, 50);
+                SetColumnWidth(_rowActionColumn, 50, 50, 50);
 
                 SetColumnWidth(_snapshotNameColumn, 190, 150, null);
                 SetColumnWidth(_snapshotCountColumn, 70, 58, null);
@@ -977,13 +1248,13 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             }
             else if (_isPhonePortraitLayout)
             {
-                SetColumnWidth(_selectColumn, 40, 40, 40);
-                SetColumnWidth(_favoriteColumn, 40, 40, 40);
-                SetColumnWidth(_keyColumn, 210, 160, null);
-                SetColumnWidth(_typeColumn, 124, 112, 140);
-                SetColumnWidth(_valueColumn, 260, 180, null);
-                SetColumnWidth(_editColumn, 42, 42, 42);
-                SetColumnWidth(_rowActionColumn, 42, 42, 42);
+                SetColumnWidth(_selectColumn, 28, 28, 28);
+                SetColumnWidth(_favoriteColumn, 54, 54, 54);
+                SetColumnWidth(_keyColumn, 260, 210, null);
+                SetColumnWidth(_typeColumn, 76, 70, 90);
+                SetColumnWidth(_valueColumn, 165, 130, null);
+                SetColumnWidth(_editColumn, 54, 54, 54);
+                SetColumnWidth(_rowActionColumn, 54, 54, 54);
 
                 SetColumnWidth(_snapshotNameColumn, 260, 180, null);
                 SetColumnWidth(_snapshotCountColumn, 86, 78, null);
@@ -1282,9 +1553,9 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             if (editCnt > 0) extra += StatusSeparator + string.Format(StatusEditedFmt,  editCnt);
             if (delCnt  > 0) extra += StatusSeparator + string.Format(StatusDeletedFmt, delCnt);
 
-            _statusLabel.text = StatusSeparator + countPart + extra;
+            _statusLabel.text = countPart + GetMobileSelectedStatusPart() + extra;
             UpdateTabLabels();
-            UpdateSelectedControls();
+            UpdateSelectedControls(false);
         }
 
         private void UpdateSnapshotsStatus()
@@ -1294,11 +1565,18 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 string count = _snapshots.Count == 0
                     ? MsgSnapshotsEmpty
                     : $"{_snapshots.Count} snapshots";
-                _statusLabel.text = StatusSeparator + count;
+                _statusLabel.text = count;
             }
 
             UpdateTabLabels();
-            UpdateSelectedControls();
+            UpdateSelectedControls(false);
+        }
+
+        private string GetMobileSelectedStatusPart()
+        {
+            return _isPhonePortraitLayout
+                ? StatusSeparator + string.Format(SelectedCountFmt, _selectedPrefs.Count)
+                : "";
         }
 
         private bool IsInCurrentTab(PlayerPrefStore pref) =>
@@ -1376,6 +1654,23 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             _rowResizeHandle?.EnableInClassList(ClassHidden, !visible);
             _listContainer?.EnableInClassList(ClassHidden, !visible);
             _snapshotsPanel?.EnableInClassList(ClassHidden, visible);
+            ApplyAdaptiveMainOnlyVisibility();
+        }
+
+        private void ApplyAdaptiveMainOnlyVisibility()
+        {
+            bool mainVisible = !_showingSnapshots;
+
+            if (_mobileQuickActions != null)
+            {
+                bool showQuickActions = _isPhonePortraitLayout && mainVisible;
+                _mobileQuickActions.EnableInClassList(ClassHidden, !showQuickActions);
+                _mobileQuickActions.style.display =
+                    showQuickActions ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (_statusRow != null)
+                _statusRow.EnableInClassList(ClassHidden, _isPhonePortraitLayout && !mainVisible);
         }
 
         private void RebuildGroupControls()
@@ -1475,7 +1770,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
 #endif
         }
 
-        private void UpdateSelectedControls()
+        private void UpdateSelectedControls(bool refreshStatus = true)
         {
             int selectedCount = _selectedPrefs.Count;
             bool hasSelected = selectedCount > 0;
@@ -1500,6 +1795,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 _deleteSelectedButton.text = BtnTextDeleteSelected;
                 _deleteSelectedButton.SetEnabled(hasSelected);
             }
+
+            RefreshSelectionStyles();
+
+            if (refreshStatus && _isPhonePortraitLayout && !_showingSnapshots)
+                UpdateStatus();
         }
 
         // =====================================================================
@@ -1762,11 +2062,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             {
                 var cell = MakeSnapshotTextCell(NameSnapshotRowName, "ppe-snapshot-name");
                 var field = cell.Q<TextField>(NameSnapshotRowName);
-                field?.RegisterCallback<PointerDownEvent>(_ =>
-                {
-                    if (field.userData is PlayerPrefsSnapshotInfo snapshot)
-                        _snapshotNameField?.SetValueWithoutNotify(snapshot.DisplayName);
-                });
+                RegisterSnapshotNameTap(cell, field);
                 return cell;
             };
             nameCol.bindCell = (element, index) =>
@@ -1779,9 +2075,11 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                     field.SetValueWithoutNotify("");
                     field.tooltip = "";
                     field.userData = null;
+                    field.isReadOnly = true;
                     return;
                 }
                 field.userData = snapshot;
+                field.isReadOnly = !_isPhonePortraitLayout;
                 field.SetValueWithoutNotify(snapshot.DisplayName);
                 field.tooltip = snapshot.FilePath;
             };
@@ -1789,7 +2087,10 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             {
                 var field = element.Q<TextField>(NameSnapshotRowName);
                 if (field != null)
+                {
                     field.userData = null;
+                    field.isReadOnly = true;
+                }
             };
             columns.Add(nameCol);
 
@@ -1812,10 +2113,15 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 if (snapshot == null)
                 {
                     field.SetValueWithoutNotify("");
+                    field.userData = null;
+                    field.isReadOnly = true;
                     return;
                 }
+                field.userData = snapshot;
+                field.isReadOnly = !_isPhonePortraitLayout;
                 field.SetValueWithoutNotify(snapshot.RowCount.ToString(CultureInfo.InvariantCulture));
             };
+            countCol.unbindCell = (element, _) => ClearSnapshotTextCellUserData(element, NameSnapshotRowCount);
             columns.Add(countCol);
 
             var sizeCol = new Column
@@ -1837,10 +2143,15 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 if (snapshot == null)
                 {
                     field.SetValueWithoutNotify("");
+                    field.userData = null;
+                    field.isReadOnly = true;
                     return;
                 }
+                field.userData = snapshot;
+                field.isReadOnly = !_isPhonePortraitLayout;
                 field.SetValueWithoutNotify(FormatFileSize(snapshot.SizeBytes));
             };
+            sizeCol.unbindCell = (element, _) => ClearSnapshotTextCellUserData(element, NameSnapshotRowSize);
             columns.Add(sizeCol);
 
             var createdCol = new Column
@@ -1862,12 +2173,17 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 if (snapshot == null)
                 {
                     field.SetValueWithoutNotify("");
+                    field.userData = null;
+                    field.isReadOnly = true;
                     return;
                 }
+                field.userData = snapshot;
+                field.isReadOnly = !_isPhonePortraitLayout;
                 field.SetValueWithoutNotify(snapshot.CreatedLocal.ToString(
                     SnapshotDisplayDateFormat,
                     CultureInfo.InvariantCulture));
             };
+            createdCol.unbindCell = (element, _) => ClearSnapshotTextCellUserData(element, NameSnapshotRowCreated);
             columns.Add(createdCol);
 
             var actionsCol = new Column
@@ -1914,8 +2230,51 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             var field = new TextField { name = name, isReadOnly = true };
             field.AddToClassList("ppe-snapshot-field");
             field.AddToClassList(className);
+            field.RegisterValueChangedCallback(_ => RestoreSnapshotTextFieldValue(field));
             cell.Add(field);
             return cell;
+        }
+
+        private void RegisterSnapshotNameTap(VisualElement cell, TextField field)
+        {
+            if (cell == null || field == null)
+                return;
+
+            cell.RegisterCallback<PointerDownEvent>(_ =>
+            {
+                if (field.userData is PlayerPrefsSnapshotInfo snapshot)
+                    _snapshotNameField?.SetValueWithoutNotify(snapshot.DisplayName);
+            }, TrickleDown.TrickleDown);
+        }
+
+        private void RestoreSnapshotTextFieldValue(TextField field)
+        {
+            if (field?.userData is not PlayerPrefsSnapshotInfo snapshot)
+                return;
+
+            string value = field.name switch
+            {
+                NameSnapshotRowName => snapshot.DisplayName,
+                NameSnapshotRowCount => snapshot.RowCount.ToString(CultureInfo.InvariantCulture),
+                NameSnapshotRowSize => FormatFileSize(snapshot.SizeBytes),
+                NameSnapshotRowCreated => snapshot.CreatedLocal.ToString(
+                    SnapshotDisplayDateFormat,
+                    CultureInfo.InvariantCulture),
+                _ => field.value,
+            };
+
+            if (!string.Equals(field.value, value, StringComparison.Ordinal))
+                field.SetValueWithoutNotify(value);
+        }
+
+        private static void ClearSnapshotTextCellUserData(VisualElement element, string fieldName)
+        {
+            var field = element.Q<TextField>(fieldName);
+            if (field == null)
+                return;
+
+            field.userData = null;
+            field.isReadOnly = true;
         }
 
         private VisualElement MakeSnapshotActionsCell()
@@ -2106,7 +2465,14 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 RegisterRowContextMenu(cell);
                 tf.RegisterValueChangedCallback(evt =>
                 {
-                    if (tf.userData is not PlayerPrefStore pref || !pref.isNew) return;
+                    if (tf.userData is not PlayerPrefStore pref) return;
+                    if (!pref.isNew)
+                    {
+                        if (!string.Equals(evt.newValue, pref.name, StringComparison.Ordinal))
+                            tf.SetValueWithoutNotify(pref.name);
+                        return;
+                    }
+
                     ReplaceTrackedKey(pref.name, evt.newValue);
                     pref.name = evt.newValue;
                     ValidateDuplicates();
@@ -2125,7 +2491,7 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
                 tf.userData = pref;
                 element.userData = pref;
                 tf.SetValueWithoutNotify(pref.name);
-                tf.isReadOnly = !pref.isNew;
+                tf.isReadOnly = !pref.isNew && !_isPhonePortraitLayout;
                 tf.SetEnabled(!pref.isMarkedForDelete);
                 tf.EnableInClassList(ClassFieldReadonly, !pref.isNew);
 
@@ -2421,7 +2787,13 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             }
             _pendingSelectionAnchorIndex = -1;
 
+            RefreshSelectionStyles();
             UpdateSelectedControls();
+        }
+
+        private void RefreshSelectionStyles()
+        {
+            _listView?.RefreshItems();
         }
 
         private void RegisterRowContextMenu(VisualElement cell)
@@ -2794,12 +3166,14 @@ namespace UAppToolKit.Options.Editor.PlayerPrefsTool
             bool isDeleted = pref.isMarkedForDelete;
             bool isNew     = !isDeleted && !isDup && pref.isNew;
             bool isEdited  = !isDeleted && !isDup && !pref.isNew && pref.Changed;
+            bool isSelected = pref != null && _selectedPrefs.Contains(pref);
             bool hasState  = isDup || isDeleted || isNew || isEdited;
 
             cell.EnableInClassList(ClassRowDeleted,   isDeleted);
             cell.EnableInClassList(ClassRowDuplicate, isDup);
             cell.EnableInClassList(ClassRowNew,       isNew);
             cell.EnableInClassList(ClassRowEdited,    isEdited);
+            cell.EnableInClassList(ClassRowSelected,  isSelected);
 
             // Odd rows get a subtle dark stripe only when no other state is active.
             cell.EnableInClassList(ClassRowOdd, index % 2 != 0 && !hasState);
