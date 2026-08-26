@@ -11,6 +11,7 @@ namespace UAppToolKit.Options
         protected const string LaunchCountName = "LaunchCount";
 
         protected const string IntType = "Int";
+        protected const string LongType = "Long";
         protected const string FloatType = "Float";
         protected const string StringType = "String";
         protected const string BooleanType = "Boolean";
@@ -60,6 +61,21 @@ namespace UAppToolKit.Options
         private int LoadInt(string propertyName)
         {
             return PlayerPrefs.GetInt(PropKey(propertyName));
+        }
+
+#endregion
+
+#region Long
+
+        private void SetLong(string propertyName, long value)
+        {
+            PlayerPrefs.SetString(PropKey(propertyName), value.ToString(CultureInfo.InvariantCulture));
+            PlayerPrefs.SetString(TypeKey(propertyName), LongType);
+        }
+
+        private long LoadLong(string propertyName)
+        {
+            return long.Parse(PlayerPrefs.GetString(PropKey(propertyName)), CultureInfo.InvariantCulture);
         }
 
 #endregion
@@ -146,6 +162,10 @@ namespace UAppToolKit.Options
             {
                 SetInt(propertyName, (int) value);
             }
+            if (value is Int64)
+            {
+                SetLong(propertyName, (long) value);
+            }
             if (value is float)
             {
                 SetFloat(propertyName, (float) value);
@@ -183,6 +203,10 @@ namespace UAppToolKit.Options
                 if (typeName == IntType)
                 {
                     return LoadInt(propertyName);
+                }
+                if (typeName == LongType)
+                {
+                    return LoadLong(propertyName);
                 }
                 if (typeName == FloatType)
                 {
